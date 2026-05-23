@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 <style>
   :root {
     /* Substrate */
@@ -90,6 +91,37 @@
   }
 
   ::selection { background: var(--hot); color: var(--hot-ink); }
+
+  /* ============ SYNC STATUS PILL ============ */
+  .sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 24px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-bright);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    flex-shrink: 0;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+  .sync-status .dot {
+    width: 6px; height: 6px;
+    background: var(--ink-low);
+    flex-shrink: 0;
+    transition: background 0.25s ease;
+  }
+  .sync-status.live { color: var(--ink); border-color: var(--ink); }
+  .sync-status.live .dot { background: var(--ink); animation: dotPulse 2s ease-in-out infinite; }
+  .sync-status.saving { color: var(--ink); }
+  .sync-status.saving .dot { background: var(--ink); animation: dotPulse 0.7s ease-in-out infinite; }
+  .sync-status.offline .dot { background: var(--ink-low); }
+  .sync-status.local .dot { background: var(--ink-low); }
+  .sync-status .stamp { color: var(--ink-low); margin-left: 6px; font-size: 9.5px; }
 
   /* ============ TOP BAR (now contains the tab nav) ============ */
   .topbar {
@@ -1642,6 +1674,9 @@
     <button class="tab" data-tab="nurture">Nurture <span class="tab-pct" data-stage-pct="N">0%</span></button>
     <button class="tab" data-tab="workflows">Arsenal</button>
   </nav>
+  <div class="sync-status local" id="syncStatus" title="Sync status">
+    <span class="dot"></span><span class="label">LOCAL ONLY</span><span class="stamp" id="lastSyncStamp"></span>
+  </div>
 </header>
 
 <main>
@@ -2288,7 +2323,131 @@
     if (typeof state[k] === 'boolean') state[k] = { c: state[k] };
   });
 
-  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  // ---- CLOUD SYNC (Supabase Realtime) ----
+  const SUPABASE_URL = window.EVERTRUST_SUPABASE_URL || '';
+  const SUPABASE_ANON_KEY = window.EVERTRUST_SUPABASE_KEY || '';
+  const CLOUD = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+  let supa = null, cloudReady = false, applyingRemote = false;
+
+  function setSyncStatus(s, label) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.classList.remove('live','saving','offline','local');
+    el.classList.add(s);
+    el.querySelector('.label').textContent = label || ({ live:'LIVE', saving:'SYNCING', offline:'OFFLINE', local:'LOCAL ONLY' })[s];
+  }
+  function stampSync() {
+    const el = document.getElementById('lastSyncStamp');
+    if (!el) return;
+    const t = new Date();
+    el.textContent = t.toTimeString().slice(0,5);
+  }
+
+  function rowToTask(row) {
+    const t = { c: !!row.checked };
+    if (row.label != null) t.l = row.label;
+    if (row.hidden) t.h = true;
+    if (row.is_custom) t.custom = true;
+    if (row.parent) t.parent = row.parent;
+    return t;
+  }
+
+  async function pullAllFromCloud() {
+    const { data, error } = await supa.from('tasks').select('*');
+    if (error) throw error;
+    const next = {};
+    (data || []).forEach(r => { next[r.task_id] = rowToTask(r); });
+    state = next;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  async function pushTaskToCloud(taskId) {
+    if (!cloudReady || applyingRemote) return;
+    setSyncStatus('saving');
+    try {
+      const t = state[taskId];
+      if (!t) {
+        await supa.from('tasks').delete().eq('task_id', taskId);
+      } else {
+        await supa.from('tasks').upsert({
+          task_id: taskId,
+          checked: !!t.c,
+          label: t.l ?? null,
+          hidden: !!t.h,
+          is_custom: !!t.custom,
+          parent: t.parent ?? null,
+          updated_at: new Date().toISOString()
+        });
+      }
+      setSyncStatus('live');
+      stampSync();
+    } catch (e) {
+      console.error('cloud push failed', e);
+      setSyncStatus('offline');
+    }
+  }
+
+  function subscribeRealtime() {
+    supa.channel('tasks-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
+        applyingRemote = true;
+        try {
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const id = payload.old.task_id;
+            delete state[id];
+            const row = document.querySelector(`.check input[data-task="${id}"]`);
+            if (row) row.closest('.check').remove();
+          } else if (payload.new) {
+            const r = payload.new;
+            const wasInState = !!state[r.task_id];
+            state[r.task_id] = rowToTask(r);
+            // If it's a custom task we haven't rendered yet, inject it
+            if (r.is_custom && !document.querySelector(`.check input[data-task="${r.task_id}"]`)) {
+              const card = document.querySelector(`[data-component="${r.parent}"]`);
+              if (card) {
+                const checklist = card.querySelector('.checklist');
+                if (checklist) {
+                  const el = createCheckElement(r.task_id, r.label || '');
+                  checklist.appendChild(el);
+                  setupEditableLabel(el.querySelector('.task-label'));
+                  setupDeleteButton(el);
+                }
+              }
+            }
+          }
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+          applyState();
+          updateProgress();
+          stampSync();
+        } finally {
+          applyingRemote = false;
+        }
+      })
+      .subscribe();
+  }
+
+  async function initCloud() {
+    if (!CLOUD) { setSyncStatus('local'); return; }
+    try {
+      const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+      supa = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      await pullAllFromCloud();
+      applyState();
+      updateProgress();
+      subscribeRealtime();
+      cloudReady = true;
+      setSyncStatus('live');
+      stampSync();
+    } catch (e) {
+      console.error('Supabase init failed', e);
+      setSyncStatus('offline');
+    }
+  }
+
+  function saveState(touchedTaskId) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+    if (touchedTaskId) pushTaskToCloud(touchedTaskId);
+  }
   function getAllCheckboxes() { return document.querySelectorAll('input[type="checkbox"][data-task]'); }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -2317,7 +2476,7 @@
       const newLabel = label.textContent.trim();
       if (!state[taskId]) state[taskId] = {};
       state[taskId].l = newLabel;
-      saveState();
+      saveState(taskId);
       updateProgress();
     });
   }
@@ -2339,7 +2498,7 @@
         state[taskId].h = true;
         check.style.display = 'none';
       }
-      saveState();
+      saveState(taskId);
       updateProgress();
     });
   }
@@ -2347,7 +2506,7 @@
   function addTaskToComponent(componentId) {
     const taskId = componentId + '.custom_' + Date.now();
     state[taskId] = { c: false, l: '', custom: true, parent: componentId };
-    saveState();
+    saveState(taskId);
 
     const card = document.querySelector(`[data-component="${componentId}"]`);
     if (!card) return;
@@ -2507,7 +2666,7 @@
       const taskId = e.target.dataset.task;
       if (!state[taskId]) state[taskId] = {};
       state[taskId].c = e.target.checked;
-      saveState();
+      saveState(taskId);
       updateProgress();
     }
   });
@@ -2695,6 +2854,7 @@
   updateProgress();
   armReveals();
   initWheel();
+  initCloud();
 </script>
 
 </body>
