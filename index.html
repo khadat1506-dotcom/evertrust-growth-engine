@@ -1,0 +1,2750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EVERTRUST Growth Engine - Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Substrate */
+    --bg:           #0A0A0A;
+    --bg-elev:      #121212;
+    --bg-elev-2:    #181818;
+    --bg-pane:      #0E0E0E;
+
+    /* Foreground */
+    --ink:          #EAEAEA;
+    --ink-dim:      #8B8B8B;
+    --ink-low:      #4A4A4A;
+    --ink-deep:     #2E2E2E;
+
+    /* Lines */
+    --line:         #1F1F1F;
+    --line-mid:     #2B2B2B;
+    --line-bright:  #3C3C3C;
+
+    /* Inverted highlight */
+    --hot:          #EAEAEA;
+    --hot-ink:      #0A0A0A;
+
+    /* Type */
+    --font-display: 'Archivo', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'Consolas', monospace;
+
+    /* Layout */
+    --topbar-h: 56px;
+    --tabbar-h: 48px;
+    --max-content: 1280px;
+    --gutter: 32px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    background: var(--bg);
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--topbar-h) + var(--tabbar-h) + 24px);
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(255,255,255,0.014) 2px,
+      rgba(255,255,255,0.014) 3px
+    );
+  }
+
+  /* Noise grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 199;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+  }
+
+  ::selection { background: var(--hot); color: var(--hot-ink); }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--topbar-h);
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--gutter);
+    gap: 32px;
+  }
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-logo {
+    height: 22px;
+    width: auto;
+    display: block;
+    filter: invert(1);
+  }
+  .brand-name {
+    display: none;
+  }
+  .topbar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 1;
+    gap: 0;
+    padding: 0 48px;
+  }
+  .topbar-nav .nav-item {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 8px 0;
+    position: relative;
+    transition: color 0.2s ease;
+    letter-spacing: -0.003em;
+  }
+  .topbar-nav .nav-item::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: 4px;
+    height: 1px;
+    background: var(--ink);
+    transition: right 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .topbar-nav .nav-item:hover::after { right: 0; }
+
+  .topbar-end { display: none; }
+  .brand-meta {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .reset-btn {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line-bright);
+    padding: 8px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    transition: all 0.25s ease;
+    font-weight: 500;
+  }
+  .reset-btn:hover {
+    color: var(--hot-ink);
+    background: var(--hot);
+    border-color: var(--hot);
+  }
+
+  /* ============ TAB BAR ============ */
+  .tabbar {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 99;
+    height: var(--tabbar-h);
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    padding: 0 var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+    transition: color 0.25s ease;
+  }
+  .tab::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 100%;
+    bottom: -1px;
+    height: 1px;
+    background: var(--hot);
+    transition: right 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .tab:hover { color: var(--ink); }
+  .tab:hover::before { right: 50%; }
+  .tab.active { color: var(--ink); }
+  .tab.active::before { right: 0; }
+
+  .tab-pct {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-low);
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  .tab:hover .tab-pct, .tab.active .tab-pct { color: var(--ink); }
+
+  /* ============ TAB CONTENT ============ */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: revealUp 0.55s cubic-bezier(0.25, 1, 0.5, 1); }
+  @keyframes revealUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .content {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: 56px var(--gutter) 32px;
+    position: relative;
+  }
+
+  /* ============ TYPOGRAPHY ============ */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--ink);
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.88;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+  h2 {
+    font-size: 22px;
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 64px 0 22px;
+    letter-spacing: -0.012em;
+    text-transform: uppercase;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-mid);
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  h2::before {
+    content: '◆';
+    color: var(--ink-dim);
+    font-size: 10px;
+    transform: translateY(-3px);
+  }
+  h2.first { margin-top: 0; }
+  h3 {
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  h4 {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    margin: 24px 0 12px;
+  }
+
+  p {
+    margin: 0 0 14px;
+    color: var(--ink-dim);
+    font-size: 13.5px;
+  }
+  .lead {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-weight: 400;
+    margin: 18px 0 32px;
+    max-width: 540px;
+  }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    font-weight: 500;
+    margin: 0 0 18px;
+  }
+  strong { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    padding: 2px 6px;
+    color: var(--ink);
+  }
+  em { font-style: italic; color: var(--ink); }
+
+  /* ============ HERO (FORRA-STYLE SPLIT) ============ */
+  .hero {
+    background: var(--bg);
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero .content {
+    padding: 0 var(--gutter);
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 56px;
+    align-items: center;
+    min-height: 620px;
+  }
+  .hero-left {
+    padding: 56px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+  }
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 56px 0;
+  }
+  .hero-radar {
+    width: 100%;
+    max-width: 520px;
+    aspect-ratio: 1;
+    position: relative;
+  }
+  .hero-radar svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .hero-radar .progress-radar-circle {
+    fill: none;
+    stroke: var(--line-bright);
+    stroke-width: 1;
+  }
+  .hero-radar .progress-ring-fill {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: butt;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+  .hero-radar .crosshair-spin {
+    transform-origin: 150px 150px;
+    animation: crosshairSpin 28s linear infinite;
+  }
+  .hero-radar .sweep {
+    transform-origin: 150px 150px;
+    animation: radarSweep 7s linear infinite;
+  }
+  .hero-radar .focus-box {
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 1;
+  }
+  .hero-radar .tick {
+    stroke: var(--ink);
+    stroke-width: 1;
+  }
+  .hero-radar .progress-radar-pct {
+    font-family: var(--font-display);
+    font-weight: 800;
+    fill: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .hero-radar .progress-radar-label {
+    font-family: var(--font-mono);
+    fill: var(--ink-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    color: var(--ink);
+    font-size: clamp(3rem, 7.5vw, 6rem);
+    line-height: 0.92;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    max-width: 720px;
+    margin: 0 0 28px;
+  }
+  .hero-wordmark {
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+    margin: 0 0 32px;
+    animation: logoBreath 5s ease-in-out infinite;
+  }
+  @keyframes logoBreath {
+    0%, 100% {
+      filter: invert(1) drop-shadow(0 0 6px rgba(234,234,234,0.08)) drop-shadow(0 0 24px rgba(234,234,234,0.04));
+      opacity: 0.92;
+    }
+    50% {
+      filter: invert(1) drop-shadow(0 0 14px rgba(234,234,234,0.35)) drop-shadow(0 0 48px rgba(234,234,234,0.18));
+      opacity: 1;
+    }
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin: 8px 0 22px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line-mid);
+    border-bottom: 1px solid var(--line-mid);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .hero-meta .sep { color: var(--ink-low); }
+  .hero .lead {
+    color: var(--ink-dim);
+    font-size: 13.5px;
+    max-width: 480px;
+    margin: 0 0 32px;
+    line-height: 1.55;
+  }
+  .hero-cta {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--line-bright);
+    width: max-content;
+  }
+  .hero-cta-btn {
+    padding: 14px 28px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    background: var(--hot);
+    color: var(--hot-ink);
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-cta-btn span { position: relative; z-index: 2; transition: color 0.25s ease; }
+  .hero-cta-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: 1;
+  }
+  .hero-cta-btn:hover::before { transform: translateY(0); }
+  .hero-cta-btn:hover span { color: var(--ink); }
+  .hero-cta-btn.secondary {
+    background: transparent;
+    color: var(--ink);
+    border-left: 1px solid var(--line-bright);
+  }
+  .hero-cta-btn.secondary::before { background: var(--hot); }
+  .hero-cta-btn.secondary:hover span { color: var(--hot-ink); }
+
+  /* HERO HUD (right side) */
+  .hero-hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .hud-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  .hud-label .dim { color: var(--ink-dim); }
+  .hud-eye {
+    width: 56px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  .hud-radar {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.5;
+    max-width: 460px;
+    margin: 16px auto;
+  }
+  .hud-radar svg { width: 100%; height: 100%; display: block; }
+  .hud-radar .circle, .hud-radar .crosshair, .hud-radar .tick, .hud-radar .sweep-line {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .hud-radar .crosshair-grp {
+    transform-origin: 50% 50%;
+    animation: crosshairSpin 32s linear infinite;
+  }
+  @keyframes crosshairSpin {
+    to { transform: rotate(360deg); }
+  }
+  .hud-radar .sweep {
+    transform-origin: 50% 50%;
+    animation: radarSweep 6s linear infinite;
+  }
+  @keyframes radarSweep {
+    to { transform: rotate(360deg); }
+  }
+  .hud-radar .focus-box {
+    fill: var(--bg);
+    stroke: var(--ink);
+  }
+
+  .hero-hud-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    font-weight: 500;
+    margin-top: 12px;
+  }
+  .hud-arrows { display: inline-block; letter-spacing: -0.05em; }
+  .hud-arrows span {
+    display: inline-block;
+    animation: arrowPulse 1.4s steps(1) infinite;
+    opacity: 0.3;
+  }
+  .hud-arrows span:nth-child(1) { animation-delay: 0.0s; }
+  .hud-arrows span:nth-child(2) { animation-delay: 0.15s; }
+  .hud-arrows span:nth-child(3) { animation-delay: 0.30s; }
+  .hud-arrows span:nth-child(4) { animation-delay: 0.45s; }
+  .hud-arrows span:nth-child(5) { animation-delay: 0.60s; }
+  .hud-arrows span:nth-child(6) { animation-delay: 0.75s; }
+  @keyframes arrowPulse {
+    0%, 49% { opacity: 0.3; }
+    50%, 100% { opacity: 1; }
+  }
+
+  /* ============ PROGRESS HERO ============ */
+  .progress-hero {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 56px;
+    align-items: center;
+    padding: 40px;
+    background: var(--bg-pane);
+    border: 1px solid var(--line-mid);
+    margin: 64px 0 56px;
+    position: relative;
+  }
+  .panel-bracket-tl, .panel-bracket-tr, .panel-bracket-bl, .panel-bracket-br {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--ink);
+    border-style: solid;
+    border-width: 0;
+    pointer-events: none;
+  }
+  .panel-bracket-tl { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
+  .panel-bracket-tr { top: -1px; right: -1px; border-top-width: 1px; border-right-width: 1px; }
+  .panel-bracket-bl { bottom: -1px; left: -1px; border-bottom-width: 1px; border-left-width: 1px; }
+  .panel-bracket-br { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }
+
+  .progress-ring {
+    width: 240px;
+    height: 240px;
+    position: relative;
+    display: block;
+  }
+  .progress-ring svg {
+    width: 240px;
+    height: 240px;
+    display: block;
+    overflow: visible;
+  }
+  .progress-radar-circle {
+    fill: none;
+    stroke: var(--line-bright);
+    stroke-width: 1;
+  }
+  .progress-ring-bg { fill: none; stroke: var(--line); stroke-width: 1; }
+  .progress-ring-fill {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: butt;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+  .progress-radar .crosshair-spin {
+    transform-origin: 150px 150px;
+    animation: crosshairSpin 28s linear infinite;
+  }
+  .progress-radar .sweep {
+    transform-origin: 150px 150px;
+    animation: radarSweep 7s linear infinite;
+  }
+  .progress-radar .focus-box {
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 1;
+  }
+  .progress-radar .tick {
+    stroke: var(--ink);
+    stroke-width: 1;
+  }
+  .progress-radar-pct {
+    font-family: var(--font-display);
+    font-weight: 800;
+    fill: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .progress-radar-label {
+    font-family: var(--font-mono);
+    fill: var(--ink-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line-mid);
+    border: 1px solid var(--line-mid);
+  }
+  .stat { background: var(--bg-pane); padding: 22px; }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    margin-bottom: 12px;
+  }
+  .stat-value .small {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    font-weight: 500;
+  }
+
+  /* ============ STAGE CARDS ============ */
+  .stage-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line-mid);
+    border: 1px solid var(--line-mid);
+    margin: 24px 0 0;
+  }
+  .stage-card {
+    padding: 26px 24px;
+    background: var(--bg-pane);
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stage-card:hover { background: var(--bg-elev); }
+  .stage-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 1px;
+    background: var(--ink);
+    transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .stage-card:hover::before { width: 100%; }
+  .stage-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+  }
+  .stage-card-letter {
+    font-family: var(--font-display);
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 0.85;
+    letter-spacing: -0.06em;
+    color: var(--ink);
+  }
+  .stage-card-pct {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+  .stage-card-name {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .stage-card-desc {
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+  .stage-bar {
+    height: 1px;
+    background: var(--line-mid);
+    overflow: hidden;
+  }
+  .stage-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--ink);
+    transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .stage-card-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ============ UP NEXT ============ */
+  .up-next {
+    background: var(--bg-pane);
+    border: 1px solid var(--line-mid);
+    padding: 0;
+  }
+  .up-next-list { list-style: none; padding: 0; margin: 0; }
+  .up-next-list li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink);
+    transition: background 0.2s ease, padding 0.2s ease;
+  }
+  .up-next-list li:last-child { border-bottom: 0; }
+  .up-next-list li:hover { background: var(--bg-elev); padding-left: 30px; }
+  .up-next-list .tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink);
+    border: 1px solid var(--line-bright);
+    padding: 3px 8px;
+    flex-shrink: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .up-next-empty {
+    text-align: center;
+    padding: 32px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  /* ============ ICP CARDS ============ */
+  .icp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line-mid);
+    border: 1px solid var(--line-mid);
+  }
+  .icp-card {
+    padding: 22px 24px;
+    background: var(--bg-pane);
+    transition: background 0.3s ease;
+    position: relative;
+  }
+  .icp-card:hover { background: var(--bg-elev); }
+  .icp-card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -0.005em;
+  }
+  .icp-card-body {
+    font-size: 12px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+
+  /* ============ STAGE TAB HEADER ============ */
+  .stage-tab-header { margin-bottom: 56px; }
+  .stage-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-bright);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 24px;
+  }
+  .stage-tab-badge .dot {
+    width: 6px; height: 6px;
+    background: var(--ink);
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .stage-tab-header h1 {
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    margin: 0 0 16px;
+  }
+  .stage-tab-progress {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 32px;
+  }
+  .stage-tab-progress-bar {
+    flex: 1;
+    height: 1px;
+    background: var(--line-mid);
+    overflow: hidden;
+  }
+  .stage-tab-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--ink);
+    transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .stage-tab-progress-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-weight: 500;
+    min-width: 100px;
+    text-align: right;
+    letter-spacing: 0.08em;
+  }
+
+  /* ============ COMPONENT CARD ============ */
+  .component-card {
+    background: var(--bg-pane);
+    border: 1px solid var(--line);
+    padding: 28px 32px;
+    margin: 16px 0;
+    transition: border-color 0.3s ease, background 0.3s ease;
+    position: relative;
+  }
+  .component-card::before,
+  .component-card::after {
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    border: 0 solid var(--ink-low);
+    transition: border-color 0.3s ease, width 0.3s ease, height 0.3s ease;
+  }
+  .component-card::before {
+    top: -1px; left: -1px;
+    border-top-width: 1px; border-left-width: 1px;
+  }
+  .component-card::after {
+    bottom: -1px; right: -1px;
+    border-bottom-width: 1px; border-right-width: 1px;
+  }
+  .component-card:hover {
+    border-color: var(--line-bright);
+    background: var(--bg-elev);
+  }
+  .component-card:hover::before,
+  .component-card:hover::after {
+    border-color: var(--ink);
+    width: 14px; height: 14px;
+  }
+  .component-card.done {
+    background: var(--bg);
+    border-color: var(--line);
+  }
+
+  .component-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .component-id {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink);
+    font-weight: 500;
+    border: 1px solid var(--line-bright);
+    padding: 4px 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .component-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .component-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+  .component-mini-bar {
+    width: 80px;
+    height: 1px;
+    background: var(--line-mid);
+    overflow: hidden;
+  }
+  .component-mini-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--ink);
+    transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .component-summary {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin: 8px 0 20px;
+    line-height: 1.55;
+  }
+
+  /* ============ CHECKLIST ============ */
+  .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 6px 11px 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, padding 0.2s ease;
+    user-select: none;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .check::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--ink);
+    transition: width 0.25s ease;
+  }
+  .check:hover { background: var(--bg-elev); padding-left: 20px; }
+  .check:hover::before { width: 2px; }
+  .check input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--line-bright);
+    background: var(--bg);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+  }
+  .check input[type="checkbox"]:hover { border-color: var(--ink); }
+  .check input[type="checkbox"]:checked {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .check input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 8px;
+    border: solid var(--bg);
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+    animation: checkStamp 0.28s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  @keyframes checkStamp {
+    from { opacity: 0; transform: rotate(45deg) scale(0.3); }
+    to { opacity: 1; transform: rotate(45deg) scale(1); }
+  }
+  .check .task-label {
+    font-size: 13px;
+    color: var(--ink);
+    transition: all 0.2s ease;
+    line-height: 1.4;
+  }
+  .check input[type="checkbox"]:checked + .task-label {
+    color: var(--ink-low);
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-low);
+  }
+
+  /* ============ DETAILS EXPANDER ============ */
+  .more-detail {
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .more-detail summary {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    font-weight: 500;
+    list-style: none;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    transition: color 0.2s ease;
+  }
+  .more-detail summary:hover { color: var(--ink); }
+  .more-detail summary::before {
+    content: '[ + ]';
+    display: inline-block;
+    margin-right: 10px;
+    font-family: var(--font-mono);
+    color: var(--ink);
+  }
+  .more-detail[open] summary::before { content: '[ - ]'; }
+  .more-detail-body {
+    padding-top: 14px;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+  .more-detail-body p { font-size: 12.5px; color: var(--ink-dim); }
+  .more-detail-body ul { padding-left: 18px; margin: 8px 0 12px; }
+  .more-detail-body li { margin-bottom: 4px; font-size: 12.5px; color: var(--ink-dim); }
+  .more-detail-body em { color: var(--ink); font-style: italic; }
+
+  /* ============ INFO BANNER ============ */
+  .info-banner {
+    padding: 18px 56px 18px 22px;
+    background: var(--bg-pane);
+    border: 1px solid var(--ink);
+    border-left-width: 3px;
+    font-size: 13px;
+    color: var(--ink);
+    margin: 28px 0;
+    position: relative;
+  }
+  .info-banner::after {
+    content: '!';
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .info-banner strong { color: var(--ink); }
+
+  /* ============ ARSENAL INTRO ============ */
+  .arsenal-intro {
+    max-width: 420px;
+    margin: 0;
+    padding: 0;
+  }
+  .arsenal-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0 0 14px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .arsenal-lead {
+    font-family: var(--font-display);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink-dim);
+    margin: 0;
+    max-width: 380px;
+  }
+  hr.arsenal-rule {
+    border: 0;
+    height: 1px;
+    background: var(--line-mid);
+    margin: 32px 0 0;
+    width: 100%;
+  }
+
+  /* ============ WORKFLOWS WHEEL ============ */
+  .wf-wheel {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    margin: 40px auto 24px;
+    aspect-ratio: 1;
+  }
+  .wf-wheel-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .wf-wheel-svg .ring {
+    fill: none;
+    stroke: var(--line-bright);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .wf-wheel-svg .divider {
+    stroke: var(--line-bright);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .wf-wheel-svg .wedge {
+    fill: rgba(234, 234, 234, 0);
+    stroke: none;
+    cursor: pointer;
+    transition: fill 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .wf-wheel-svg .wedge:hover { fill: rgba(234, 234, 234, 0.03); }
+  .wf-wheel-svg .wedge.active { fill: rgba(234, 234, 234, 0.1); }
+  .wf-wheel-svg .wedge-outline {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 0;
+    pointer-events: none;
+    transition: stroke-width 0.35s ease;
+  }
+  .wf-wheel-svg .wedge-outline.active { stroke-width: 1.5; }
+
+  .wf-wheel-items {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .wf-wheel-item {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    transition: transform 0.3s ease;
+  }
+  .wf-wheel-item-id {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-dim);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition: color 0.3s ease, transform 0.3s ease, font-size 0.3s ease;
+    line-height: 1;
+  }
+  .wf-wheel-item-tag {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: var(--ink-low);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-top: 3px;
+    transition: color 0.3s ease;
+  }
+  .wf-wheel-item.active .wf-wheel-item-id { color: var(--ink); transform: scale(1.15); }
+  .wf-wheel-item.active .wf-wheel-item-tag { color: var(--ink); }
+
+  .wf-wheel-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 38%;
+    height: 38%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: 50%;
+  }
+  .wf-wheel-stage {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .wf-wheel-id-large {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .wf-wheel-name {
+    font-family: var(--font-display);
+    font-size: clamp(15px, 2vw, 19px);
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .wf-wheel-desc {
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    line-height: 1.45;
+    margin-bottom: 12px;
+    max-width: 100%;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+  .wf-wheel-meta {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .wf-wheel-meta span {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: var(--ink-dim);
+    border: 1px solid var(--line-bright);
+    padding: 2px 6px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .wf-wheel-action {
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-low);
+    transition: color 0.25s ease;
+  }
+  .wf-wheel-action.live { color: var(--ink); }
+
+  .wf-wheel-nav {
+    position: absolute;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-bright);
+    background: var(--bg);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    color: var(--ink);
+    font-size: 16px;
+    transition: all 0.25s ease;
+    z-index: 5;
+  }
+  .wf-wheel-nav:hover {
+    background: var(--hot);
+    color: var(--hot-ink);
+    border-color: var(--hot);
+  }
+  .wf-wheel-nav.prev { left: -68px; transform: translateY(-50%); }
+  .wf-wheel-nav.next { right: -68px; transform: translateY(-50%); }
+
+  .wf-wheel-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-low);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* legacy wf-grid retained as fallback display none */
+  .wf-grid {
+    display: none;
+  }
+  .wf-card {
+    padding: 22px 26px;
+    background: var(--bg-pane);
+    border-left: 1px solid var(--ink-low);
+    transition: background 0.3s ease, border-left-color 0.3s ease, padding 0.25s ease;
+    position: relative;
+  }
+  .wf-card:hover {
+    background: var(--bg-elev);
+    border-left-color: var(--ink);
+    padding-left: 32px;
+  }
+  .wf-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .wf-id {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .wf-meta { display: flex; gap: 8px; }
+  .wf-meta span {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-dim);
+    border: 1px solid var(--line-bright);
+    padding: 2px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .wf-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 6px 0 8px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .wf-desc {
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+
+  /* ============ KPI TABLE ============ */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line-mid);
+    border: 1px solid var(--line-mid);
+    margin: 24px 0;
+  }
+  .kpi-card {
+    padding: 22px;
+    background: var(--bg-pane);
+    border-top: 1px solid var(--ink-low);
+    transition: background 0.3s ease, border-top-color 0.3s ease;
+  }
+  .kpi-card:hover { background: var(--bg-elev); border-top-color: var(--ink); }
+  .kpi-stage {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .kpi-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 11.5px;
+  }
+  .kpi-row:last-child { border-bottom: 0; }
+  .kpi-row .k {
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+  }
+  .kpi-row .v {
+    color: var(--ink);
+    font-weight: 500;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    background: var(--bg);
+    color: var(--ink-dim);
+    border-top: 1px solid var(--line);
+    padding: 0;
+    margin-top: 0;
+    position: relative;
+  }
+  footer .content {
+    padding: 32px var(--gutter) 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: end;
+  }
+  footer h4 {
+    color: var(--ink);
+    font-size: 10px;
+    margin: 0 0 12px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  footer p {
+    font-size: 11.5px;
+    font-family: var(--font-mono);
+    margin: 4px 0;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+  }
+  footer .brand-orange { color: var(--ink); }
+
+  /* ============ EDITABLE TASKS ============ */
+  .task-label {
+    flex: 1;
+    outline: none;
+    padding: 2px 6px;
+    margin-left: -6px;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    cursor: text;
+    min-height: 18px;
+  }
+  .task-label[contenteditable="true"]:hover { background: var(--bg-elev); }
+  .task-label[contenteditable="true"]:focus {
+    background: var(--bg-elev);
+    box-shadow: inset 0 0 0 1px var(--ink);
+    text-decoration: none !important;
+    color: var(--ink) !important;
+  }
+
+  .task-delete {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--ink-low);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    margin-left: 4px;
+    font-family: var(--font-mono);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .check:hover .task-delete { opacity: 1; }
+  .task-delete:hover { color: var(--ink); }
+
+  .add-task {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1px dashed var(--line-bright);
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s ease;
+  }
+  .add-task:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--bg-elev);
+    border-style: solid;
+  }
+  .add-task::before { content: '[ + ] '; color: var(--ink); }
+
+  /* ============ FIXED HUD CHROME ============ */
+  .corner-bracket {
+    position: fixed;
+    width: 14px;
+    height: 14px;
+    border-color: var(--ink-low);
+    border-style: solid;
+    border-width: 0;
+    z-index: 90;
+    pointer-events: none;
+    transition: border-color 0.5s ease;
+  }
+  .corner-bracket.tl { top: 12px; left: 12px; border-top-width: 1px; border-left-width: 1px; }
+  .corner-bracket.tr { top: 12px; right: 12px; border-top-width: 1px; border-right-width: 1px; }
+  .corner-bracket.bl { bottom: 12px; left: 12px; border-bottom-width: 1px; border-left-width: 1px; }
+  .corner-bracket.br { bottom: 12px; right: 12px; border-bottom-width: 1px; border-right-width: 1px; }
+
+  .page-indicator {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    z-index: 90;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    pointer-events: none;
+    background: var(--bg);
+    padding: 8px 14px;
+    border: 1px solid var(--line-mid);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 500;
+  }
+  .page-indicator .label { color: var(--ink-dim); }
+
+  .build-tag {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 90;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    background: var(--bg);
+    padding: 6px 14px;
+    border: 1px solid var(--ink);
+    pointer-events: none;
+    line-height: 1.2;
+  }
+
+  /* ============ REVEAL ON SCROLL ============ */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s cubic-bezier(0.25, 1, 0.5, 1), transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  [data-reveal].in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1024px) {
+    .hero .content { grid-template-columns: 1fr; min-height: auto; }
+    .hero-left { padding: 48px 0 32px; border-right: 0; border-bottom: 1px solid var(--line-mid); }
+    .hero-right { padding: 32px 0 56px; }
+  }
+  @media (max-width: 900px) {
+    :root { --gutter: 20px; }
+    .topbar { grid-template-columns: auto auto; padding: 0 var(--gutter); }
+    .topbar-nav, .brand-meta { display: none; }
+    .tab { padding: 0 14px; font-size: 10px; }
+    .content { padding: 40px var(--gutter) 80px; }
+    h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
+    .progress-hero { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
+    .progress-ring { margin: 0 auto; }
+    .progress-stats { grid-template-columns: 1fr; }
+    .stage-cards { grid-template-columns: 1fr 1fr; }
+    .icp-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    footer .content { grid-template-columns: 1fr; padding: 24px var(--gutter); }
+    .component-header { grid-template-columns: 1fr; gap: 10px; }
+    .component-progress { justify-content: flex-start; }
+    .page-indicator, .build-tag, .corner-bracket { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Fixed HUD chrome -->
+<div class="corner-bracket tl"></div>
+<div class="corner-bracket tr"></div>
+<div class="corner-bracket bl"></div>
+<div class="corner-bracket br"></div>
+
+<!-- ==================== TOP BAR ==================== -->
+<header class="topbar">
+  <div class="brand-mark">
+    <img class="brand-logo" src="evertrust-logo.png" alt="Evertrust">
+  </div>
+  <nav class="topbar-nav">
+    <button class="nav-item" data-tab="reach">Process</button>
+    <button class="nav-item" data-tab="workflows">Arsenal</button>
+    <button class="nav-item" data-tab="dashboard">Engine</button>
+    <button class="nav-item" data-tab="activate">Activate</button>
+    <button class="nav-item" data-tab="nurture">Nurture</button>
+  </nav>
+  <div class="topbar-end"></div>
+</header>
+
+<!-- ==================== TAB BAR ==================== -->
+<nav class="tabbar" role="tablist">
+  <button class="tab active" data-tab="dashboard">Dashboard <span class="tab-pct" data-stage-pct="all">0%</span></button>
+  <button class="tab" data-tab="reach">Reach <span class="tab-pct" data-stage-pct="R">0%</span></button>
+  <button class="tab" data-tab="engage">Engage <span class="tab-pct" data-stage-pct="E">0%</span></button>
+  <button class="tab" data-tab="activate">Activate <span class="tab-pct" data-stage-pct="A">0%</span></button>
+  <button class="tab" data-tab="nurture">Nurture <span class="tab-pct" data-stage-pct="N">0%</span></button>
+  <button class="tab" data-tab="workflows">Arsenal</button>
+</nav>
+
+<main>
+
+<!-- =========================================================== -->
+<!-- ==================== TAB: DASHBOARD ====================== -->
+<!-- =========================================================== -->
+<section class="tab-content active" data-tab="dashboard">
+
+<div class="hero">
+<div class="content" style="padding:0 var(--gutter);">
+  <div class="hero-left">
+    <p class="kicker">Growth Engine . Build Tracker</p>
+    <img class="hero-wordmark" src="evertrust-logo.png" alt="EVERTRUST GERMANY">
+    <h1 class="visually-hidden" style="position:absolute;left:-9999px;">Evertrust Germany</h1>
+    <div class="hero-meta">
+      <span>Berlin, DE</span>
+      <span class="sep">/</span>
+      <span>Built for tender markets</span>
+    </div>
+    <p class="lead">Tender lead system for German renewables, construction, industry and services. Track build progress, check off tasks, watch the engine come online.</p>
+    <div class="hero-cta">
+      <button class="hero-cta-btn" data-jump="reach"><span>Start build</span></button>
+      <button class="hero-cta-btn secondary" data-jump="workflows"><span>Workflows</span></button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-radar">
+      <svg viewBox="0 0 300 300">
+        <!-- Outer radar ring -->
+        <circle class="progress-radar-circle" cx="150" cy="150" r="120"/>
+        <!-- Progress arc fill -->
+        <circle class="progress-ring-fill" cx="150" cy="150" r="120"
+                stroke-dasharray="754" stroke-dashoffset="754"></circle>
+        <!-- Crosshair group (rotating) -->
+        <g class="crosshair-spin">
+          <circle cx="150" cy="50" r="8" stroke="#EAEAEA" stroke-width="1" fill="none"/>
+          <line x1="150" y1="42" x2="150" y2="26" stroke="#EAEAEA" stroke-width="1"/>
+          <line x1="150" y1="50" x2="158" y2="50" stroke="#EAEAEA" stroke-width="1"/>
+          <line x1="150" y1="50" x2="142" y2="50" stroke="#EAEAEA" stroke-width="1"/>
+        </g>
+        <!-- Triangle pointer above center -->
+        <polygon points="143,118 157,118 150,130" fill="#EAEAEA"/>
+        <!-- Horizontal line through center -->
+        <line x1="60" y1="150" x2="240" y2="150" stroke="#EAEAEA" stroke-width="1"/>
+        <!-- FOCUS-style box with build pct -->
+        <rect class="focus-box" x="100" y="138" width="100" height="28" stroke-width="1"/>
+        <text class="progress-radar-pct" x="150" y="159" font-size="20" text-anchor="middle" id="overallPct">0%</text>
+        <!-- Ticks below center -->
+        <g>
+          <line x1="90"  y1="175" x2="90"  y2="190" class="tick"/>
+          <line x1="102" y1="175" x2="102" y2="184" class="tick"/>
+          <line x1="114" y1="175" x2="114" y2="184" class="tick"/>
+          <line x1="126" y1="175" x2="126" y2="184" class="tick"/>
+          <line x1="138" y1="175" x2="138" y2="190" class="tick"/>
+          <line x1="150" y1="175" x2="150" y2="184" class="tick"/>
+          <line x1="162" y1="175" x2="162" y2="190" class="tick"/>
+          <line x1="174" y1="175" x2="174" y2="184" class="tick"/>
+          <line x1="186" y1="175" x2="186" y2="184" class="tick"/>
+          <line x1="198" y1="175" x2="198" y2="184" class="tick"/>
+          <line x1="210" y1="175" x2="210" y2="190" class="tick"/>
+        </g>
+        <!-- Sweep line rotating -->
+        <g class="sweep">
+          <line x1="150" y1="150" x2="150" y2="32" stroke="#EAEAEA" stroke-width="1" opacity="0.4"/>
+        </g>
+        <!-- Build complete label below -->
+        <text class="progress-radar-label" x="150" y="220" font-size="9" text-anchor="middle">Build Complete</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="content">
+
+<!-- Stage Progress -->
+<h2 class="first">Stage progress</h2>
+<div class="stage-cards" data-reveal>
+  <div class="stage-card r" data-jump="reach">
+    <div class="stage-card-head">
+      <div class="stage-card-letter">R</div>
+      <div class="stage-card-pct" data-stage-pct="R">0%</div>
+    </div>
+    <div class="stage-card-name">Reach</div>
+    <div class="stage-card-desc">First contact - outbound + inbound</div>
+    <div class="stage-bar"><div class="stage-bar-fill" data-stage-fill="R"></div></div>
+    <div class="stage-card-count"><span data-stage-count="R">0/0</span> tasks</div>
+  </div>
+  <div class="stage-card e" data-jump="engage">
+    <div class="stage-card-head">
+      <div class="stage-card-letter">E</div>
+      <div class="stage-card-pct" data-stage-pct="E">0%</div>
+    </div>
+    <div class="stage-card-name">Engage</div>
+    <div class="stage-card-desc">Reply to call-booked</div>
+    <div class="stage-bar"><div class="stage-bar-fill" data-stage-fill="E"></div></div>
+    <div class="stage-card-count"><span data-stage-count="E">0/0</span> tasks</div>
+  </div>
+  <div class="stage-card a" data-jump="activate">
+    <div class="stage-card-head">
+      <div class="stage-card-letter">A</div>
+      <div class="stage-card-pct" data-stage-pct="A">0%</div>
+    </div>
+    <div class="stage-card-name">Activate</div>
+    <div class="stage-card-desc">Call to close</div>
+    <div class="stage-bar"><div class="stage-bar-fill" data-stage-fill="A"></div></div>
+    <div class="stage-card-count"><span data-stage-count="A">0/0</span> tasks</div>
+  </div>
+  <div class="stage-card n" data-jump="nurture">
+    <div class="stage-card-head">
+      <div class="stage-card-letter">N</div>
+      <div class="stage-card-pct" data-stage-pct="N">0%</div>
+    </div>
+    <div class="stage-card-name">Nurture</div>
+    <div class="stage-card-desc">CRM + handoff</div>
+    <div class="stage-bar"><div class="stage-bar-fill" data-stage-fill="N"></div></div>
+    <div class="stage-card-count"><span data-stage-count="N">0/0</span> tasks</div>
+  </div>
+</div>
+
+<!-- Up Next -->
+<h2>Up next</h2>
+<div class="up-next" data-reveal>
+  <ul class="up-next-list" id="upNextList">
+    <li class="up-next-empty">Loading...</li>
+  </ul>
+</div>
+
+</div>
+</section>
+
+
+<!-- =========================================================== -->
+<!-- ====================== TAB: REACH ======================== -->
+<!-- =========================================================== -->
+<section class="tab-content" data-tab="reach">
+<div class="content">
+
+<div class="stage-tab-header r">
+  <div class="stage-tab-badge r"><span class="dot"></span>Stage 1 of 4 . Build P1 . Wk 1-3</div>
+  <h1>Reach</h1>
+  <p class="lead">First contact. They find you, you find them. Outbound delivers leads now; inbound compounds from month six onwards.</p>
+  <div class="stage-tab-progress">
+    <div class="stage-tab-progress-bar"><div class="stage-tab-progress-fill" data-stage-fill="R"></div></div>
+    <div class="stage-tab-progress-text"><span data-stage-count="R">0/0</span> . <span data-stage-pct="R">0%</span></div>
+  </div>
+</div>
+
+<h2 class="first">Phase 0 . Foundation</h2>
+
+<div class="component-card" data-component="P0" data-reveal>
+  <div class="component-header">
+    <span class="component-id">P0</span>
+    <div class="component-title">Foundation - Week 1</div>
+    <div class="component-progress">
+      <span data-comp-count="P0">0/8</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="P0"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Lock the inputs before spending output cycles. ICP, offer, voice, CRM baseline.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.P0.1"><span class="task-label">Write ICP document (DE primary) - 6 segments + disqualifiers + triggers</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.2"><span class="task-label">Offer one-liner + 3 outcomes (DE + EN)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.3"><span class="task-label">Voice guide DE (extracted from existing samples)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.4"><span class="task-label">Voice guide EN (extracted from existing samples)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.5"><span class="task-label">Scaffold Obsidian vault folders (/regulations, /past-proposals, /objection-bank, /case-studies, /positioning, /sales-playbook, /winning-emails)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.6"><span class="task-label">Load initial objection bank (top 15)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.7"><span class="task-label">Load regulatory reference cards (EEG, VOB/A, UVgO)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.P0.8"><span class="task-label">Backfill last 60 days of leads into CRM for baseline</span></div>
+  </div>
+</div>
+
+<h2>Outbound components</h2>
+
+<div class="component-card" data-component="R.1" data-reveal>
+  <div class="component-header">
+    <span class="component-id">R.1</span>
+    <div class="component-title">Niche Analytics</div>
+    <div class="component-progress">
+      <span data-comp-count="R.1">0/7</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="R.1"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Manual-execute n8n workflow that ranks every tender niche by 5 dimensions and exports Excel.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.1.1"><span class="task-label">Define 20-30 tender niches</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.2"><span class="task-label">Set up scoring rubric (War Perspective, Complexity, Bids #, Amount, Margin)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.3"><span class="task-label">Connect TED data source</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.4"><span class="task-label">Connect e.bund + evergabe-online</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.5"><span class="task-label">Connect L&auml;nder Vergabe-Plattformen</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.6"><span class="task-label">Build WF-01 n8n workflow + Excel export</span></div>
+    <div class="check"><input type="checkbox" data-task="R.1.7"><span class="task-label">First export generated + top 5 niches selected</span></div>
+  </div>
+  <details class="more-detail">
+    <summary>More detail</summary>
+    <div class="more-detail-body">
+      <p>Input: master list of 20-30 niches (e.g. <em>PV-Freifl&auml;chenanlagen Bund</em>, <em>W&auml;rmepumpen Kommunal NRW</em>).</p>
+      <p>Output: <code>niche-analytics-YYYY-MM.xlsx</code> with composite weighted score and rank. Run quarterly or before any major campaign re-targeting.</p>
+    </div>
+  </details>
+</div>
+
+<div class="component-card" data-component="R.2" data-reveal>
+  <div class="component-header">
+    <span class="component-id">R.2</span>
+    <div class="component-title">Lead Scraping (free sources)</div>
+    <div class="component-progress">
+      <span data-comp-count="R.2">0/7</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="R.2"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Zero-cost sourcing. Tender platforms + Impressum + LinkedIn manual + email pattern guessing.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.2.1"><span class="task-label">Build tender platform scraper (TED + e.bund + Vergabe-Plattformen)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.2"><span class="task-label">Build Impressum scraper (TMG &sect;5 email extraction)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.3"><span class="task-label">Set up Handelsregister + Northdata lookup</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.4"><span class="task-label">Define LinkedIn manual decision-maker search process</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.5"><span class="task-label">Build email pattern guesser + Hunter.io verifier</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.6"><span class="task-label">Build WF-02 n8n workflow with ICP filter</span></div>
+    <div class="check"><input type="checkbox" data-task="R.2.7"><span class="task-label">First 200 prospects in queue</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="R.3" data-reveal>
+  <div class="component-header">
+    <span class="component-id">R.3</span>
+    <div class="component-title">Email Writing Agent</div>
+    <div class="component-progress">
+      <span data-comp-count="R.3">0/6</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="R.3"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Niche-driven email generator trained on existing winning emails. Output: subject + hook + body + CTA + ending.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.3.1"><span class="task-label">Ingest existing winning emails into Obsidian /winning-emails/{niche}/</span></div>
+    <div class="check"><input type="checkbox" data-task="R.3.2"><span class="task-label">Add losing-emails examples (/losing-emails/)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.3.3"><span class="task-label">Create structural templates per niche</span></div>
+    <div class="check"><input type="checkbox" data-task="R.3.4"><span class="task-label">Build Claude generation prompt + voice constraint</span></div>
+    <div class="check"><input type="checkbox" data-task="R.3.5"><span class="task-label">Build specificity validator (flags generic outputs)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.3.6"><span class="task-label">Integrate as front of WF-03</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="R.4" data-reveal>
+  <div class="component-header">
+    <span class="component-id">R.4</span>
+    <div class="component-title">Email Sequence - REACH BAZOOKA</div>
+    <div class="component-progress">
+      <span data-comp-count="R.4">0/5</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="R.4"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Integrate Writing Agent output into the existing REACH BAZOOKA workflow. No new sequence built.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.4.1"><span class="task-label">Audit existing REACH BAZOOKA workflow</span></div>
+    <div class="check"><input type="checkbox" data-task="R.4.2"><span class="task-label">Wire Writing Agent output into BAZOOKA queue</span></div>
+    <div class="check"><input type="checkbox" data-task="R.4.3"><span class="task-label">Test end-to-end with 5 sample prospects</span></div>
+    <div class="check"><input type="checkbox" data-task="R.4.4"><span class="task-label">Tune cadence for tender-buyer rhythm if needed</span></div>
+    <div class="check"><input type="checkbox" data-task="R.4.5"><span class="task-label">Go live with first batch</span></div>
+  </div>
+</div>
+
+<h2>Inbound (Deferred . Month 6+)</h2>
+
+<div class="component-card" data-component="R.5" data-reveal>
+  <div class="component-header">
+    <span class="component-id">R.5</span>
+    <div class="component-title">AEO + SEO - Website + Blog + LinkedIn weekly</div>
+    <div class="component-progress">
+      <span data-comp-count="R.5">0/9</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="R.5"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Three-channel approach: rewrite the website, 1 blog/week, 1 LinkedIn post/week. ~6h/week ongoing.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="R.5.1"><span class="task-label">Audit current evertrust-germany.de</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.2"><span class="task-label">Rewrite Home page for AEO/SEO</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.3"><span class="task-label">Rewrite remaining 12-15 main pages</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.4"><span class="task-label">Add Schema markup (FAQPage etc.)</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.5"><span class="task-label">Fix Core Web Vitals</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.6"><span class="task-label">Set up blog with first published article</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.7"><span class="task-label">Define weekly blog cadence + 8-week pipeline of topics</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.8"><span class="task-label">First weekly LinkedIn post live</span></div>
+    <div class="check"><input type="checkbox" data-task="R.5.9"><span class="task-label">LinkedIn posting rhythm established (Mon 08:30 CET)</span></div>
+  </div>
+</div>
+
+</div>
+</section>
+
+
+<!-- =========================================================== -->
+<!-- ====================== TAB: ENGAGE ======================= -->
+<!-- =========================================================== -->
+<section class="tab-content" data-tab="engage">
+<div class="content">
+
+<div class="stage-tab-header e">
+  <div class="stage-tab-badge e"><span class="dot"></span>Stage 2 of 4 . Build P4 . Wk 4-6</div>
+  <h1>Engage</h1>
+  <p class="lead">Bridge between Reach and Activate. Reply handling and 60-day re-engage logic.</p>
+  <div class="stage-tab-progress">
+    <div class="stage-tab-progress-bar"><div class="stage-tab-progress-fill" data-stage-fill="E"></div></div>
+    <div class="stage-tab-progress-text"><span data-stage-count="E">0/0</span> . <span data-stage-pct="E">0%</span></div>
+  </div>
+</div>
+
+<div class="info-banner">
+  <strong>Note.</strong> Engage builds at P4, but until WF-05 is automated, replies must be handled manually. Cap Reach volume to your manual reply capacity (~20/wk) until Engage is live.
+</div>
+
+<div class="component-card" data-component="E.1" data-reveal>
+  <div class="component-header">
+    <span class="component-id">E.1</span>
+    <div class="component-title">Email Reply Agent (sub of REACH BAZOOKA)</div>
+    <div class="component-progress">
+      <span data-comp-count="E.1">0/6</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="E.1"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">No new IMAP listener. BAZOOKA's existing reply detection hands replies to the Reply Agent for classification + drafting.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="E.1.1"><span class="task-label">Define 5 classification buckets (interested / objection / no-capacity / not-a-fit / negative)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.1.2"><span class="task-label">Define tender-active sub-tag logic</span></div>
+    <div class="check"><input type="checkbox" data-task="E.1.3"><span class="task-label">Build Claude classification prompt</span></div>
+    <div class="check"><input type="checkbox" data-task="E.1.4"><span class="task-label">Wire as sub-workflow off REACH BAZOOKA reply hook</span></div>
+    <div class="check"><input type="checkbox" data-task="E.1.5"><span class="task-label">Build response drafting (uses WF-07 RAG for objections)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.1.6"><span class="task-label">Test with 10 sample replies across all buckets</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="E.2" data-reveal>
+  <div class="component-header">
+    <span class="component-id">E.2</span>
+    <div class="component-title">RAG Agent - Claude + Obsidian (direct)</div>
+    <div class="component-progress">
+      <span data-comp-count="E.2">0/5</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="E.2"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Claude reads Obsidian vault directly via filesystem MCP. No vector store, no embeddings.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="E.2.1"><span class="task-label">Set up filesystem MCP access to Obsidian vault</span></div>
+    <div class="check"><input type="checkbox" data-task="E.2.2"><span class="task-label">Define vault navigation prompts (Read / Glob / Grep usage)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.2.3"><span class="task-label">Build WF-07 sub-flow (query in, synthesised answer + citations out)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.2.4"><span class="task-label">Test retrieval quality with 10 sample queries</span></div>
+    <div class="check"><input type="checkbox" data-task="E.2.5"><span class="task-label">Wire into E.1 Email Reply Agent + A.2 Sales Analysis</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="E.3" data-reveal>
+  <div class="component-header">
+    <span class="component-id">E.3</span>
+    <div class="component-title">Snooze + Re-engage (60-day)</div>
+    <div class="component-progress">
+      <span data-comp-count="E.3">0/5</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="E.3"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">"No capacity" replies pause sequences for 60 days, then re-enrich and restart with a fresh opener.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="E.3.1"><span class="task-label">Define snooze tag schema in CRM</span></div>
+    <div class="check"><input type="checkbox" data-task="E.3.2"><span class="task-label">Build pause-sequence logic (BAZOOKA hook)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.3.3"><span class="task-label">Build 60-day timer + daily check</span></div>
+    <div class="check"><input type="checkbox" data-task="E.3.4"><span class="task-label">Build re-enrichment step (Impressum + LinkedIn refresh)</span></div>
+    <div class="check"><input type="checkbox" data-task="E.3.5"><span class="task-label">Build WF-09 workflow + push back to WF-03</span></div>
+  </div>
+</div>
+
+</div>
+</section>
+
+
+<!-- =========================================================== -->
+<!-- ====================== TAB: ACTIVATE ===================== -->
+<!-- =========================================================== -->
+<section class="tab-content" data-tab="activate">
+<div class="content">
+
+<div class="stage-tab-header a">
+  <div class="stage-tab-badge a"><span class="dot"></span>Stage 3 of 4 . Build P2 . Wk 2-6</div>
+  <h1>Activate</h1>
+  <p class="lead">On the call - closing the deal. VSL warms cold traffic; Sales Analysis Agent makes every call better than the last.</p>
+  <div class="stage-tab-progress">
+    <div class="stage-tab-progress-bar"><div class="stage-tab-progress-fill" data-stage-fill="A"></div></div>
+    <div class="stage-tab-progress-text"><span data-stage-count="A">0/0</span> . <span data-stage-pct="A">0%</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="A.1" data-reveal>
+  <div class="component-header">
+    <span class="component-id">A.1</span>
+    <div class="component-title">VSL - "What EVERTRUST is"</div>
+    <div class="component-progress">
+      <span data-comp-count="A.1">0/8</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="A.1"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">90-180s German talking-head founder video. Lives at <code>/winning</code> with single CTA.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="A.1.1"><span class="task-label">Write VSL script (5 sections: Hook / Why fail / Mechanism / Proof / Next step)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.2"><span class="task-label">Generate 30 German hook variants</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.3"><span class="task-label">Score hooks with 5-expert panel</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.4"><span class="task-label">Record VSL (iPhone + lapel mic)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.5"><span class="task-label">Edit in Descript or CapCut</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.6"><span class="task-label">Build /winning landing page</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.7"><span class="task-label">Embed VSL + Calendly + single CTA</span></div>
+    <div class="check"><input type="checkbox" data-task="A.1.8"><span class="task-label">Ship top 3 hooks as A/B variants</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="A.2" data-reveal>
+  <div class="component-header">
+    <span class="component-id">A.2</span>
+    <div class="component-title">Sales Analysis Agent - Post-call</div>
+    <div class="component-progress">
+      <span data-comp-count="A.2">0/8</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="A.2"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Record &gt; Whisper &gt; Claude reads transcript + RAG playbook &gt; scored report within 30 min of call.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="A.2.1"><span class="task-label">Load 3-5 best sales-call examples into Obsidian</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.2"><span class="task-label">Expand objection bank to top 15</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.3"><span class="task-label">Define scoring rubric (Discovery / Pain / Proof / Close / Voice)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.4"><span class="task-label">Set up Whisper transcription pipeline</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.5"><span class="task-label">Build WF-11 (transcript &gt; RAG &gt; Claude scoring report)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.6"><span class="task-label">Wire call-recording webhook (Zoom/Meet/Teams)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.7"><span class="task-label">Test on first 5 calls</span></div>
+    <div class="check"><input type="checkbox" data-task="A.2.8"><span class="task-label">Aggregate first weekly report</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="A.3" data-reveal>
+  <div class="component-header">
+    <span class="component-id">A.3</span>
+    <div class="component-title">Sales Analysis Agent - Live (Wk 6+)</div>
+    <div class="component-progress">
+      <span data-comp-count="A.3">0/6</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="A.3"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Real-time coaching during calls. Hard gate: 50+ scored calls in corpus before activation.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="A.3.1"><span class="task-label">Reach 50+ scored calls in Obsidian (gate)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.3.2"><span class="task-label">Set up streaming transcription (AssemblyAI / Deepgram)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.3.3"><span class="task-label">Build live suggestion logic (30s window + RAG retrieve)</span></div>
+    <div class="check"><input type="checkbox" data-task="A.3.4"><span class="task-label">Build side panel UI for rep</span></div>
+    <div class="check"><input type="checkbox" data-task="A.3.5"><span class="task-label">Build WF-12 live workflow</span></div>
+    <div class="check"><input type="checkbox" data-task="A.3.6"><span class="task-label">Test in 5 live calls</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="A.4" data-reveal>
+  <div class="component-header">
+    <span class="component-id">A.4</span>
+    <div class="component-title">Scoring + Feedback Loop</div>
+    <div class="component-progress">
+      <span data-comp-count="A.4">0/4</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="A.4"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Weekly aggregation surfaces patterns. Recurring objections become new entries; successful closes become playbook updates.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="A.4.1"><span class="task-label">Set up weekly aggregation script</span></div>
+    <div class="check"><input type="checkbox" data-task="A.4.2"><span class="task-label">Define ritual: update objection bank after each call</span></div>
+    <div class="check"><input type="checkbox" data-task="A.4.3"><span class="task-label">Define ritual: playbook update from each won deal</span></div>
+    <div class="check"><input type="checkbox" data-task="A.4.4"><span class="task-label">First weekly aggregation report shipped</span></div>
+  </div>
+</div>
+
+</div>
+</section>
+
+
+<!-- =========================================================== -->
+<!-- ====================== TAB: NURTURE ====================== -->
+<!-- =========================================================== -->
+<section class="tab-content" data-tab="nurture">
+<div class="content">
+
+<div class="stage-tab-header n">
+  <div class="stage-tab-badge n"><span class="dot"></span>Stage 4 of 4 . Build P3 . Wk 3-5</div>
+  <h1>Nurture</h1>
+  <p class="lead">Lean stage. CRM data layer + handoff to operations. Retention itself is owned by ops, not marketing.</p>
+  <div class="stage-tab-progress">
+    <div class="stage-tab-progress-bar"><div class="stage-tab-progress-fill" data-stage-fill="N"></div></div>
+    <div class="stage-tab-progress-text"><span data-stage-count="N">0/0</span> . <span data-stage-pct="N">0%</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="N.1" data-reveal>
+  <div class="component-header">
+    <span class="component-id">N.1</span>
+    <div class="component-title">CRM 1 - Pipeline tab</div>
+    <div class="component-progress">
+      <span data-comp-count="N.1">0/4</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="N.1"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Tab 1 of <code>Evertrust CRM.xlsx</code>. New leads through to decision. 10 stages.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="N.1.1"><span class="task-label">Create <code>Evertrust CRM.xlsx</code> in Google Drive</span></div>
+    <div class="check"><input type="checkbox" data-task="N.1.2"><span class="task-label">Define Pipeline tab columns (lead data + stage + tags)</span></div>
+    <div class="check"><input type="checkbox" data-task="N.1.3"><span class="task-label">Set up 10 pipeline stages (New &gt; Engaged &gt; Qualified &gt; Booked &gt; Done &gt; Sent &gt; Won/Lost/Snoozed)</span></div>
+    <div class="check"><input type="checkbox" data-task="N.1.4"><span class="task-label">Backfill last 60 days of leads + retro-score against ICP</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="N.2" data-reveal>
+  <div class="component-header">
+    <span class="component-id">N.2</span>
+    <div class="component-title">CRM 2 - Customers tab</div>
+    <div class="component-progress">
+      <span data-comp-count="N.2">0/3</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="N.2"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">Tab 2 of the same file. Active + ex customers. Owned by ops.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="N.2.1"><span class="task-label">Define Customers tab columns</span></div>
+    <div class="check"><input type="checkbox" data-task="N.2.2"><span class="task-label">Set up 4 stages (Onboarding &gt; Active &gt; Complete &gt; Lapsed)</span></div>
+    <div class="check"><input type="checkbox" data-task="N.2.3"><span class="task-label">Hand off write access to operations team</span></div>
+  </div>
+</div>
+
+<div class="component-card" data-component="N.3" data-reveal>
+  <div class="component-header">
+    <span class="component-id">N.3</span>
+    <div class="component-title">Auto-migration on Won</div>
+    <div class="component-progress">
+      <span data-comp-count="N.3">0/4</span>
+      <div class="component-mini-bar"><div class="component-mini-bar-fill" data-comp-fill="N.3"></div></div>
+    </div>
+  </div>
+  <p class="component-summary">When Pipeline row marked Won, WF-13 migrates the row to Customers tab and notifies ops.</p>
+  <div class="checklist">
+    <div class="check"><input type="checkbox" data-task="N.3.1"><span class="task-label">Build WF-13 cell-change trigger</span></div>
+    <div class="check"><input type="checkbox" data-task="N.3.2"><span class="task-label">Build append logic to Customers tab with stage Onboarding</span></div>
+    <div class="check"><input type="checkbox" data-task="N.3.3"><span class="task-label">Build ops notification (Slack or email)</span></div>
+    <div class="check"><input type="checkbox" data-task="N.3.4"><span class="task-label">Test migration with sample data</span></div>
+  </div>
+</div>
+
+</div>
+</section>
+
+
+<!-- =========================================================== -->
+<!-- ==================== TAB: WORKFLOWS ====================== -->
+<!-- =========================================================== -->
+<section class="tab-content" data-tab="workflows">
+<div class="content">
+
+<div class="arsenal-intro">
+  <h1 class="arsenal-title">Arsenal</h1>
+  <p class="arsenal-lead">Thirteen weapons - twelve in build, one already mounted. REACH BAZOOKA is the live artillery; the rest are loaded around it.</p>
+</div>
+<hr class="arsenal-rule">
+
+<div class="wf-wheel" id="wfWheel" data-reveal>
+  <svg class="wf-wheel-svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+    <g class="wedges"></g>
+    <g class="wedge-outlines"></g>
+    <circle class="ring" cx="300" cy="300" r="290"/>
+    <circle class="ring" cx="300" cy="300" r="130"/>
+    <g class="dividers"></g>
+  </svg>
+  <div class="wf-wheel-items"></div>
+  <div class="wf-wheel-center">
+    <div class="wf-wheel-stage"></div>
+    <div class="wf-wheel-id-large"></div>
+    <div class="wf-wheel-name"></div>
+    <div class="wf-wheel-desc"></div>
+    <div class="wf-wheel-meta"></div>
+    <div class="wf-wheel-action"></div>
+  </div>
+  <button class="wf-wheel-nav prev" type="button" title="Previous">&lt;</button>
+  <button class="wf-wheel-nav next" type="button" title="Next">&gt;</button>
+</div>
+<div class="wf-wheel-footer">[ &lt; &gt; or arrow keys to navigate . 13 weapons ]</div>
+
+</div>
+</section>
+
+
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+<div class="content">
+  <div>
+    <h4>EVERTRUST GMBH</h4>
+    <p>Tender Service &amp; Award Management</p>
+    <p>Braunschweiger Str. 77, 12055 Berlin</p>
+    <p><span class="brand-orange">evertrust-germany.de</span></p>
+  </div>
+  <div>
+    <h4>Document</h4>
+    <p>Growth Engine . v3.0 . Dashboard</p>
+    <p>D:\Evertrust\growth-engine.html</p>
+    <p>Progress stored locally in your browser</p>
+  </div>
+</div>
+</footer>
+
+<script>
+  // ============ TAB NAVIGATION ============
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+
+  function activateTab(name) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    contents.forEach(c => c.classList.toggle('active', c.dataset.tab === name));
+    history.replaceState(null, '', '#' + name);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(armReveals, 50);
+  }
+  tabs.forEach(t => t.addEventListener('click', () => activateTab(t.dataset.tab)));
+  document.querySelectorAll('[data-jump]').forEach(el => {
+    el.addEventListener('click', () => activateTab(el.dataset.jump));
+  });
+  document.querySelectorAll('.topbar-nav .nav-item').forEach(el => {
+    el.addEventListener('click', () => activateTab(el.dataset.tab));
+  });
+
+  const initTab = location.hash.replace('#', '');
+  if (initTab && document.querySelector(`[data-tab="${initTab}"]`)) activateTab(initTab);
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+    const activeTab = document.querySelector('.tab.active');
+    const idx = Array.from(tabs).indexOf(activeTab);
+    if (e.key === 'ArrowRight' && idx < tabs.length - 1) activateTab(tabs[idx + 1].dataset.tab);
+    if (e.key === 'ArrowLeft' && idx > 0) activateTab(tabs[idx - 1].dataset.tab);
+  });
+
+  // ============ STATE ============
+  const STORAGE_KEY = 'evertrust-progress-v3';
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { state = {}; }
+  Object.keys(state).forEach(k => {
+    if (typeof state[k] === 'boolean') state[k] = { c: state[k] };
+  });
+
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function getAllCheckboxes() { return document.querySelectorAll('input[type="checkbox"][data-task]'); }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function createCheckElement(taskId, labelText) {
+    const row = document.createElement('div');
+    row.className = 'check';
+    row.innerHTML = `
+      <input type="checkbox" data-task="${taskId}">
+      <span class="task-label" contenteditable="true" spellcheck="false">${escapeHtml(labelText || '')}</span>
+      <button class="task-delete" title="Delete task" type="button">&times;</button>
+    `;
+    return row;
+  }
+
+  function setupEditableLabel(label) {
+    label.contentEditable = 'true';
+    label.spellcheck = false;
+    label.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); label.blur(); }
+    });
+    label.addEventListener('blur', () => {
+      const check = label.closest('.check');
+      const cb = check && check.querySelector('input[type="checkbox"]');
+      if (!cb) return;
+      const taskId = cb.dataset.task;
+      const newLabel = label.textContent.trim();
+      if (!state[taskId]) state[taskId] = {};
+      state[taskId].l = newLabel;
+      saveState();
+      updateProgress();
+    });
+  }
+
+  function setupDeleteButton(check) {
+    const btn = check.querySelector('.task-delete');
+    if (!btn) return;
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const cb = check.querySelector('input[type="checkbox"]');
+      if (!cb) return;
+      const taskId = cb.dataset.task;
+      if (state[taskId] && state[taskId].custom) {
+        delete state[taskId];
+        check.remove();
+      } else {
+        if (!state[taskId]) state[taskId] = {};
+        state[taskId].h = true;
+        check.style.display = 'none';
+      }
+      saveState();
+      updateProgress();
+    });
+  }
+
+  function addTaskToComponent(componentId) {
+    const taskId = componentId + '.custom_' + Date.now();
+    state[taskId] = { c: false, l: '', custom: true, parent: componentId };
+    saveState();
+
+    const card = document.querySelector(`[data-component="${componentId}"]`);
+    if (!card) return;
+    const checklist = card.querySelector('.checklist');
+    if (!checklist) return;
+    const check = createCheckElement(taskId, '');
+    checklist.appendChild(check);
+    setupEditableLabel(check.querySelector('.task-label'));
+    setupDeleteButton(check);
+
+    setTimeout(() => {
+      const lbl = check.querySelector('.task-label');
+      lbl.focus();
+    }, 50);
+
+    updateProgress();
+  }
+
+  function applyState() {
+    Object.entries(state).forEach(([taskId, data]) => {
+      if (!data || !data.custom || !data.parent) return;
+      const card = document.querySelector(`[data-component="${data.parent}"]`);
+      if (!card) return;
+      const checklist = card.querySelector('.checklist');
+      if (!checklist) return;
+      if (checklist.querySelector(`input[data-task="${taskId}"]`)) return;
+      const check = createCheckElement(taskId, data.l || '');
+      checklist.appendChild(check);
+    });
+
+    document.querySelectorAll('.check').forEach(check => {
+      const cb = check.querySelector('input[type="checkbox"]');
+      if (!cb) return;
+      const data = state[cb.dataset.task];
+      if (!data) return;
+      cb.checked = !!data.c;
+      if (typeof data.l === 'string') {
+        const lbl = check.querySelector('.task-label');
+        if (lbl) lbl.textContent = data.l;
+      }
+      if (data.h) check.style.display = 'none';
+    });
+  }
+
+  function setupAllInteractions() {
+    document.querySelectorAll('.check').forEach(check => {
+      if (!check.querySelector('.task-delete')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'task-delete';
+        btn.title = 'Delete task';
+        btn.innerHTML = '&times;';
+        check.appendChild(btn);
+      }
+      setupDeleteButton(check);
+
+      const lbl = check.querySelector('.task-label');
+      if (lbl) setupEditableLabel(lbl);
+
+      if (!check.dataset.clickGuarded) {
+        check.dataset.clickGuarded = '1';
+        check.addEventListener('click', e => {
+          if (e.target.closest('.task-label') || e.target.closest('.task-delete')) {
+            e.preventDefault();
+          }
+        });
+      }
+    });
+
+    document.querySelectorAll('.checklist').forEach(checklist => {
+      const next = checklist.nextElementSibling;
+      if (next && next.classList && next.classList.contains('add-task')) return;
+      const card = checklist.closest('[data-component]');
+      if (!card) return;
+      const comp = card.dataset.component;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'add-task';
+      btn.textContent = 'Add task';
+      btn.addEventListener('click', () => addTaskToComponent(comp));
+      checklist.parentNode.insertBefore(btn, checklist.nextSibling);
+    });
+  }
+
+  function visibleCheckboxes() {
+    return Array.from(getAllCheckboxes()).filter(cb => {
+      const check = cb.closest('.check');
+      return check && check.style.display !== 'none';
+    });
+  }
+
+  function updateProgress() {
+    const all = visibleCheckboxes();
+    const checked = all.filter(cb => cb.checked).length;
+    const total = all.length;
+    const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+    const pctEl = document.getElementById('overallPct');
+    const doneEl = document.getElementById('doneCount');
+    const totalEl = document.getElementById('totalCount');
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (doneEl) doneEl.textContent = checked;
+    if (totalEl) totalEl.textContent = total;
+
+    const ringCircumference = 2 * Math.PI * 120;
+    const ringFill = document.querySelector('.progress-ring-fill');
+    if (ringFill) {
+      ringFill.style.strokeDasharray = ringCircumference;
+      ringFill.style.strokeDashoffset = ringCircumference - (pct / 100) * ringCircumference;
+    }
+
+    ['R', 'E', 'A', 'N'].forEach(stage => {
+      const cbs = Array.from(document.querySelectorAll(`input[type="checkbox"][data-task^="${stage}."]`))
+        .filter(cb => { const ch = cb.closest('.check'); return ch && ch.style.display !== 'none'; });
+      const c = cbs.filter(cb => cb.checked).length;
+      const t = cbs.length;
+      const p = t > 0 ? Math.round((c / t) * 100) : 0;
+      document.querySelectorAll(`[data-stage-pct="${stage}"]`).forEach(el => el.textContent = p + '%');
+      document.querySelectorAll(`[data-stage-fill="${stage}"]`).forEach(el => el.style.width = p + '%');
+      document.querySelectorAll(`[data-stage-count="${stage}"]`).forEach(el => el.textContent = c + '/' + t);
+    });
+
+    document.querySelectorAll('[data-stage-pct="all"]').forEach(el => el.textContent = pct + '%');
+
+    document.querySelectorAll('.component-card').forEach(card => {
+      const comp = card.dataset.component;
+      const cbs = Array.from(card.querySelectorAll('input[type="checkbox"]'))
+        .filter(cb => { const ch = cb.closest('.check'); return ch && ch.style.display !== 'none'; });
+      const c = cbs.filter(cb => cb.checked).length;
+      const t = cbs.length;
+      const p = t > 0 ? Math.round((c / t) * 100) : 0;
+      const countEl = card.querySelector(`[data-comp-count="${comp}"]`);
+      const fillEl = card.querySelector(`[data-comp-fill="${comp}"]`);
+      if (countEl) countEl.textContent = c + '/' + t;
+      if (fillEl) fillEl.style.width = p + '%';
+      card.classList.toggle('done', c === t && t > 0);
+    });
+
+    const upNextList = document.getElementById('upNextList');
+    if (upNextList) {
+      const unchecked = visibleCheckboxes().filter(cb => !cb.checked).slice(0, 5);
+      if (unchecked.length === 0) {
+        upNextList.innerHTML = '<li class="up-next-empty">All tasks complete. The engine is fully built.</li>';
+      } else {
+        upNextList.innerHTML = unchecked.map(cb => {
+          const lbl = cb.parentElement.querySelector('.task-label');
+          const text = lbl ? lbl.textContent : '';
+          return `<li><span class="tag">${cb.dataset.task}</span><span>${escapeHtml(text)}</span></li>`;
+        }).join('');
+      }
+    }
+  }
+
+  // Checkbox change listener
+  document.addEventListener('change', e => {
+    if (e.target.matches('input[type="checkbox"][data-task]')) {
+      const taskId = e.target.dataset.task;
+      if (!state[taskId]) state[taskId] = {};
+      state[taskId].c = e.target.checked;
+      saveState();
+      updateProgress();
+    }
+  });
+
+  // Reset via keyboard: Shift+R
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+    if (e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+      if (confirm('Reset all progress and any edits? This cannot be undone.')) {
+        state = {};
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+  });
+
+  // ============ REVEAL ON SCROLL ============
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  function armReveals() {
+    document.querySelectorAll('[data-reveal]:not(.in)').forEach(el => {
+      io.observe(el);
+    });
+  }
+
+  // ============ WORKFLOWS WHEEL ============
+  const N8N_BASE = 'https://evertrustgmbh.app.n8n.cloud';
+  const WORKFLOWS = [
+    { id: 'WF-00', stage: 'REACH',    name: 'REACH BAZOOKA',         trigger: 'always live',       wk: 'LIVE',   n8nId: 'qVvT6WLTYxtfubUg', desc: 'Sends the emails. Tracks replies.' },
+    { id: 'WF-01', stage: 'REACH',    name: 'Niche Flamethrower',    trigger: 'manual',            wk: 'Wk 1',   n8nId: 'iIJPgF1KoH2zGHme', desc: 'Finds the hottest tender niches.' },
+    { id: 'WF-02', stage: 'REACH',    name: 'Lead Satellite',        trigger: 'schedule Mon 09:00', wk: 'Wk 1',   desc: 'Pulls free leads from public sources.' },
+    { id: 'WF-03', stage: 'REACH',    name: 'Bazooka Ammo Forge',    trigger: 'row added',         wk: 'Wk 2',   desc: 'Writes the outbound emails.' },
+    { id: 'WF-04', stage: 'REACH',    name: 'LinkedIn Sniper',       trigger: 'schedule daily 08:00', wk: 'Wk 1', desc: 'Drafts daily LinkedIn DMs.' },
+    { id: 'WF-05', stage: 'ENGAGE',   name: 'Reply Glock',           trigger: 'BAZOOKA reply',     wk: 'Wk 4-5', desc: 'Sorts and answers replies.' },
+    { id: 'WF-07', stage: 'ENGAGE',   name: 'Vault Cannon',          trigger: 'sub-call',          wk: 'Wk 4',   desc: 'Pulls answers from the vault.' },
+    { id: 'WF-09', stage: 'ENGAGE',   name: 'Sleeper Grenade',       trigger: 'tag + schedule',    wk: 'Wk 5',   desc: 'Wakes dead leads after 60 days.' },
+    { id: 'WF-10', stage: 'ENGAGE',   name: 'Intake Scanner',        trigger: 'webhook',           wk: 'Wk 4',   desc: 'Scores every inbound lead.' },
+    { id: 'WF-11', stage: 'ACTIVATE', name: 'After-Action Scope',    trigger: 'recording webhook', wk: 'Wk 3-4', desc: 'Reviews calls after the fact.' },
+    { id: 'WF-12', stage: 'ACTIVATE', name: 'Sniper Earpiece',       trigger: 'call start',        wk: 'Wk 6+',  desc: 'Coaches live during calls.' },
+    { id: 'WF-13', stage: 'NURTURE',  name: 'CRM Forklift',          trigger: 'cell change Won',   wk: 'Wk 3',   desc: 'Moves won deals to Customers.' },
+    { id: 'WF-14', stage: 'OPS',      name: 'Reporting Beacon',      trigger: 'schedule daily 07:00', wk: 'Wk 2', desc: 'Daily KPI digest by email.' }
+  ];
+
+  let wheelIndex = 0;
+  function initWheel() {
+    const container = document.getElementById('wfWheel');
+    if (!container) return;
+    const svg = container.querySelector('.wf-wheel-svg');
+    const wedgesGroup = svg.querySelector('.wedges');
+    const outlinesGroup = svg.querySelector('.wedge-outlines');
+    const dividersGroup = svg.querySelector('.dividers');
+    const itemsLayer = container.querySelector('.wf-wheel-items');
+
+    const N = WORKFLOWS.length;
+    const CX = 300, CY = 300;
+    const R_OUTER = 290, R_INNER = 130;
+    const SEG = 360 / N;
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function wedgePath(i) {
+      const a1 = (i * SEG - 90 - SEG/2) * Math.PI / 180;
+      const a2 = (i * SEG - 90 + SEG/2) * Math.PI / 180;
+      const x1o = CX + R_OUTER * Math.cos(a1);
+      const y1o = CY + R_OUTER * Math.sin(a1);
+      const x2o = CX + R_OUTER * Math.cos(a2);
+      const y2o = CY + R_OUTER * Math.sin(a2);
+      const x1i = CX + R_INNER * Math.cos(a1);
+      const y1i = CY + R_INNER * Math.sin(a1);
+      const x2i = CX + R_INNER * Math.cos(a2);
+      const y2i = CY + R_INNER * Math.sin(a2);
+      return `M ${x1i} ${y1i} L ${x1o} ${y1o} A ${R_OUTER} ${R_OUTER} 0 0 1 ${x2o} ${y2o} L ${x2i} ${y2i} A ${R_INNER} ${R_INNER} 0 0 0 ${x1i} ${y1i} Z`;
+    }
+
+    for (let i = 0; i < N; i++) {
+      const d = wedgePath(i);
+
+      const fill = document.createElementNS(SVG_NS, 'path');
+      fill.setAttribute('d', d);
+      fill.setAttribute('class', 'wedge');
+      fill.dataset.index = i;
+      fill.addEventListener('mouseenter', () => selectWheel(i));
+      fill.addEventListener('click', () => openWheelN8n(i));
+      wedgesGroup.appendChild(fill);
+
+      const outline = document.createElementNS(SVG_NS, 'path');
+      outline.setAttribute('d', d);
+      outline.setAttribute('class', 'wedge-outline');
+      outline.dataset.index = i;
+      outlinesGroup.appendChild(outline);
+
+      const a = (i * SEG - 90 + SEG/2) * Math.PI / 180;
+      const x1 = CX + R_INNER * Math.cos(a);
+      const y1 = CY + R_INNER * Math.sin(a);
+      const x2 = CX + R_OUTER * Math.cos(a);
+      const y2 = CY + R_OUTER * Math.sin(a);
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+      line.setAttribute('class', 'divider');
+      dividersGroup.appendChild(line);
+    }
+
+    const R_ITEM_PCT = 35;
+    WORKFLOWS.forEach((wf, i) => {
+      const angle = (i * SEG - 90) * Math.PI / 180;
+      const xPct = 50 + R_ITEM_PCT * Math.cos(angle);
+      const yPct = 50 + R_ITEM_PCT * Math.sin(angle);
+      const el = document.createElement('div');
+      el.className = 'wf-wheel-item';
+      el.dataset.index = i;
+      el.style.left = xPct + '%';
+      el.style.top = yPct + '%';
+      const num = wf.id.replace('WF-', '');
+      el.innerHTML = `<div class="wf-wheel-item-id">${num}</div><div class="wf-wheel-item-tag">${wf.stage.slice(0,3)}</div>`;
+      itemsLayer.appendChild(el);
+    });
+
+    container.querySelector('.wf-wheel-nav.prev').addEventListener('click', () => selectWheel(wheelIndex - 1));
+    container.querySelector('.wf-wheel-nav.next').addEventListener('click', () => selectWheel(wheelIndex + 1));
+
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+      const wfActive = document.querySelector('.tab-content[data-tab="workflows"].active');
+      if (!wfActive) return;
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); e.stopPropagation(); selectWheel(wheelIndex - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); e.stopPropagation(); selectWheel(wheelIndex + 1); }
+    }, true);
+
+    selectWheel(0);
+  }
+
+  function selectWheel(i) {
+    const container = document.getElementById('wfWheel');
+    if (!container) return;
+    const N = WORKFLOWS.length;
+    wheelIndex = ((i % N) + N) % N;
+    const wf = WORKFLOWS[wheelIndex];
+
+    container.querySelectorAll('.wedge').forEach(w => {
+      w.classList.toggle('active', parseInt(w.dataset.index) === wheelIndex);
+    });
+    container.querySelectorAll('.wedge-outline').forEach(w => {
+      w.classList.toggle('active', parseInt(w.dataset.index) === wheelIndex);
+    });
+    container.querySelectorAll('.wf-wheel-item').forEach(el => {
+      el.classList.toggle('active', parseInt(el.dataset.index) === wheelIndex);
+    });
+
+    container.querySelector('.wf-wheel-stage').textContent = wf.stage;
+    container.querySelector('.wf-wheel-id-large').textContent = wf.id;
+    container.querySelector('.wf-wheel-name').textContent = wf.name;
+    container.querySelector('.wf-wheel-desc').textContent = wf.desc;
+    container.querySelector('.wf-wheel-meta').innerHTML = `<span>${wf.trigger}</span><span>${wf.wk}</span>`;
+
+    const actionEl = container.querySelector('.wf-wheel-action');
+    if (actionEl) {
+      if (wf.n8nId) {
+        actionEl.textContent = '[ CLICK TO OPEN IN N8N ]';
+        actionEl.classList.add('live');
+      } else {
+        actionEl.textContent = '[ NOT YET BUILT ]';
+        actionEl.classList.remove('live');
+      }
+    }
+  }
+
+  function openWheelN8n(i) {
+    const N = WORKFLOWS.length;
+    const idx = ((i % N) + N) % N;
+    const wf = WORKFLOWS[idx];
+    const url = wf.n8nId ? `${N8N_BASE}/workflow/${wf.n8nId}` : N8N_BASE + '/home/workflows';
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  // Init
+  applyState();
+  setupAllInteractions();
+  updateProgress();
+  armReveals();
+  initWheel();
+</script>
+
+</body>
+</html>
