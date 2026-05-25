@@ -1429,6 +1429,27 @@
     text-transform: uppercase;
     margin: 0 0 4px;
   }
+  .aim-modal-title-input {
+    display: block;
+    width: 100%;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    line-height: 1;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--line-bright);
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .aim-modal-title-input::placeholder { color: var(--ink-low); font-weight: 800; }
+  .aim-modal-title-input:focus { border-bottom-color: var(--ink); border-bottom-style: solid; }
+  .aim-modal-title-input:hover { border-bottom-color: var(--ink); }
   .aim-modal-sub {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -2430,9 +2451,9 @@
 <div class="aim-backdrop" id="aimBackdrop">
   <div class="aim-modal" role="dialog" aria-labelledby="aimTitle">
     <div class="aim-modal-head">
-      <div>
-        <h2 class="aim-modal-title" id="aimTitle">Aim</h2>
-        <div class="aim-modal-sub">Target configuration . config.json</div>
+      <div style="flex:1; min-width:0;">
+        <input class="aim-modal-title-input" id="aim-name" name="name" type="text" placeholder="Name this attack" maxlength="60" autocomplete="off" form="aimForm">
+        <div class="aim-modal-sub">Attack configuration . config.json</div>
       </div>
       <button class="aim-close" id="aimClose" type="button" aria-label="Close">&times;</button>
     </div>
@@ -3060,7 +3081,7 @@
 
   // ============ AIM (target config) ============
   const AIM_KEY = 'evertrust-target-config';
-  const AIM_FIELDS = ['niche','city','project','gmailLabel','salesCalendarId','reviewEmail','whatsappNumber'];
+  const AIM_FIELDS = ['name','niche','city','project','gmailLabel','salesCalendarId','reviewEmail','whatsappNumber'];
 
   function loadAimConfig() {
     try { return JSON.parse(localStorage.getItem(AIM_KEY) || 'null'); } catch (e) { return null; }
@@ -3072,9 +3093,10 @@
     const cfg = loadAimConfig();
     const banner = document.getElementById('aimCurrent');
     if (!banner) return;
-    if (cfg && cfg.project) {
+    const label = (cfg && (cfg.name || cfg.project)) || '';
+    if (label) {
       banner.classList.add('locked');
-      banner.innerHTML = '[ TARGET LOCKED <span class="target">' + (cfg.project || '') + '</span> ]';
+      banner.innerHTML = '[ TARGET LOCKED <span class="target">' + label + '</span> ]';
     } else {
       banner.classList.remove('locked');
       banner.textContent = '[ NO TARGET LOCKED ]';
