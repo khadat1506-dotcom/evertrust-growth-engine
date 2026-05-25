@@ -92,36 +92,48 @@
 
   ::selection { background: var(--hot); color: var(--hot-ink); }
 
-  /* ============ SYNC STATUS PILL ============ */
-  .sync-status {
+  /* ============ TOPBAR AIM BUTTON (with sync indicator dot) ============ */
+  .topbar-aim {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin-left: 24px;
-    padding: 6px 12px;
-    border: 1px solid var(--line-bright);
+    padding: 8px 16px;
+    border: 1px solid var(--ink);
+    background: transparent;
     font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--ink);
+    cursor: pointer;
     flex-shrink: 0;
-    transition: color 0.25s ease, border-color 0.25s ease;
+    transition: all 0.25s ease;
   }
-  .sync-status .dot {
+  .topbar-aim:hover {
+    background: var(--hot);
+    color: var(--hot-ink);
+    border-color: var(--hot);
+  }
+  .topbar-aim::before {
+    content: '+';
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--ink-dim);
+    transition: color 0.25s ease;
+  }
+  .topbar-aim:hover::before { color: var(--hot-ink); }
+  .topbar-aim .dot {
     width: 6px; height: 6px;
     background: var(--ink-low);
     flex-shrink: 0;
     transition: background 0.25s ease;
   }
-  .sync-status.live { color: var(--ink); border-color: var(--ink); }
-  .sync-status.live .dot { background: var(--ink); animation: dotPulse 2s ease-in-out infinite; }
-  .sync-status.saving { color: var(--ink); }
-  .sync-status.saving .dot { background: var(--ink); animation: dotPulse 0.7s ease-in-out infinite; }
-  .sync-status.offline .dot { background: var(--ink-low); }
-  .sync-status.local .dot { background: var(--ink-low); }
-  .sync-status .stamp { color: var(--ink-low); margin-left: 6px; font-size: 9.5px; }
+  .topbar-aim.live .dot { background: var(--ink); animation: dotPulse 2s ease-in-out infinite; }
+  .topbar-aim.saving .dot { background: var(--ink); animation: dotPulse 0.7s ease-in-out infinite; }
+  .topbar-aim.offline .dot { background: var(--ink-low); }
+  .topbar-aim:hover .dot { background: var(--hot-ink); }
 
   /* ============ TOP BAR (now contains the tab nav) ============ */
   .topbar {
@@ -1351,28 +1363,7 @@
     border-color: var(--hot);
   }
   .wf-wheel-nav.prev { left: -68px; transform: translateY(-50%); }
-  .wf-wheel-nav.aim {
-    right: -120px;
-    transform: translateY(-50%);
-    width: 96px;
-    height: 44px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-  .wf-wheel-nav.aim::before {
-    content: '+';
-    font-weight: 400;
-    font-size: 14px;
-    color: var(--ink-dim);
-    transition: color 0.2s ease;
-  }
-  .wf-wheel-nav.aim:hover::before { color: var(--hot-ink); }
+  .wf-wheel-nav.next { right: -68px; transform: translateY(-50%); }
 
   /* ============ AIM MODAL ============ */
   .aim-backdrop {
@@ -1398,11 +1389,14 @@
     max-width: 520px;
     background: var(--bg);
     border: 1px solid var(--ink);
-    padding: 36px 36px 32px;
-    max-height: 90vh;
+    padding: 28px 32px 24px;
+    max-height: 92vh;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     animation: aimSlideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
+  .aim-modal::-webkit-scrollbar { display: none; }
   @keyframes aimSlideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1421,19 +1415,19 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 28px;
-    padding-bottom: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--line-mid);
   }
   .aim-modal-title {
     font-family: var(--font-display);
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 800;
     color: var(--ink);
     letter-spacing: -0.025em;
     line-height: 1;
     text-transform: uppercase;
-    margin: 0 0 6px;
+    margin: 0 0 4px;
   }
   .aim-modal-sub {
     font-family: var(--font-mono);
@@ -1458,12 +1452,12 @@
   .aim-form {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
   }
-  .aim-field { display: flex; flex-direction: column; gap: 6px; }
+  .aim-field { display: flex; flex-direction: column; gap: 5px; }
   .aim-field label {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--ink-dim);
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -1474,8 +1468,8 @@
     border: 1px solid var(--line-bright);
     color: var(--ink);
     font-family: var(--font-mono);
-    font-size: 13px;
-    padding: 10px 12px;
+    font-size: 12.5px;
+    padding: 8px 10px;
     outline: none;
     transition: border-color 0.2s ease, background 0.2s ease;
   }
@@ -1845,9 +1839,9 @@
     <button class="tab" data-tab="nurture">Nurture <span class="tab-pct" data-stage-pct="N">0%</span></button>
     <button class="tab" data-tab="workflows">Arsenal</button>
   </nav>
-  <div class="sync-status local" id="syncStatus" title="Sync status">
-    <span class="dot"></span><span class="label">LOCAL ONLY</span><span class="stamp" id="lastSyncStamp"></span>
-  </div>
+  <button class="topbar-aim local" id="aimBtn" type="button" title="Set target (config.json) . Dot = sync status">
+    <span class="dot"></span>AIM
+  </button>
 </header>
 
 <main>
@@ -2427,10 +2421,10 @@
     <div class="wf-wheel-action"></div>
   </div>
   <button class="wf-wheel-nav prev" type="button" title="Previous">&lt;</button>
-  <button class="wf-wheel-nav aim" type="button" title="Set target" id="aimBtn">AIM</button>
+  <button class="wf-wheel-nav next" type="button" title="Next">&gt;</button>
 </div>
 <div class="aim-current" id="aimCurrent">[ NO TARGET LOCKED ]</div>
-<div class="wf-wheel-footer">[ hover to preview . click weapon to open in n8n . [AIM] to set the target ]</div>
+<div class="wf-wheel-footer">[ hover to preview . click weapon to open in n8n . [AIM] in topbar to set target ]</div>
 
 <!-- AIM target config modal -->
 <div class="aim-backdrop" id="aimBackdrop">
@@ -2548,19 +2542,14 @@
   const CLOUD = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
   let supa = null, cloudReady = false, applyingRemote = false;
 
-  function setSyncStatus(s, label) {
-    const el = document.getElementById('syncStatus');
+  function setSyncStatus(s) {
+    const el = document.getElementById('aimBtn');
     if (!el) return;
     el.classList.remove('live','saving','offline','local');
     el.classList.add(s);
-    el.querySelector('.label').textContent = label || ({ live:'LIVE', saving:'SYNCING', offline:'OFFLINE', local:'LOCAL ONLY' })[s];
+    el.title = 'Set target (config.json) . Sync: ' + s.toUpperCase();
   }
-  function stampSync() {
-    const el = document.getElementById('lastSyncStamp');
-    if (!el) return;
-    const t = new Date();
-    el.textContent = t.toTimeString().slice(0,5);
-  }
+  function stampSync() { /* no visible stamp anymore */ }
 
   function rowToTask(row) {
     const t = { c: !!row.checked };
@@ -3011,7 +3000,9 @@
     });
 
     const prevBtn = container.querySelector('.wf-wheel-nav.prev');
+    const nextBtn = container.querySelector('.wf-wheel-nav.next');
     if (prevBtn) prevBtn.addEventListener('click', () => selectWheel(wheelIndex - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => selectWheel(wheelIndex + 1));
 
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
