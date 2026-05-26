@@ -2479,10 +2479,6 @@
         <input id="aim-salesCalendarId" name="salesCalendarId" type="text" placeholder="info@evertrust-germany.de" required>
       </div>
       <div class="aim-field">
-        <label for="aim-reviewEmail">Review Email</label>
-        <input id="aim-reviewEmail" name="reviewEmail" type="email" placeholder="kha@evertrust-germany.de" required>
-      </div>
-      <div class="aim-field">
         <label for="aim-whatsappNumber">WhatsApp Number</label>
         <input id="aim-whatsappNumber" name="whatsappNumber" type="text" placeholder="+84333634500" required>
       </div>
@@ -3081,7 +3077,7 @@
 
   // ============ AIM (target config) ============
   const AIM_KEY = 'evertrust-target-config';
-  const AIM_FIELDS = ['name','niche','city','project','gmailLabel','salesCalendarId','reviewEmail','whatsappNumber'];
+  const AIM_FIELDS = ['name','niche','city','project','gmailLabel','salesCalendarId','whatsappNumber'];
 
   function loadAimConfig() {
     try { return JSON.parse(localStorage.getItem(AIM_KEY) || 'null'); } catch (e) { return null; }
