@@ -2463,6 +2463,10 @@
         <input id="aim-niche" name="niche" type="text" placeholder="LED" required>
       </div>
       <div class="aim-field">
+        <label for="aim-target">Target</label>
+        <input id="aim-target" name="target" type="text" placeholder="EPC, Installer, Operator..." required>
+      </div>
+      <div class="aim-field">
         <label for="aim-city">City</label>
         <input id="aim-city" name="city" type="text" placeholder="Berlin" required>
       </div>
@@ -3077,7 +3081,7 @@
 
   // ============ AIM (target config) ============
   const AIM_KEY = 'evertrust-target-config';
-  const AIM_FIELDS = ['name','niche','city','project','gmailLabel','salesCalendarId','whatsappNumber'];
+  const AIM_FIELDS = ['name','niche','target','city','project','gmailLabel','salesCalendarId','whatsappNumber'];
 
   function loadAimConfig() {
     try { return JSON.parse(localStorage.getItem(AIM_KEY) || 'null'); } catch (e) { return null; }
