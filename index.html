@@ -3123,7 +3123,26 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('aimBackdrop')?.classList.contains('open')) closeAimModal();
   });
-  document.getElementById('aimForm')?.addEventListener('submit', e => {
+  async function deployCampaignToDrive(cfg) {
+    const url = window.EVERTRUST_DEPLOY_WEBHOOK || '';
+    if (!url) return { skipped: true };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg)
+    });
+    if (!res.ok) throw new Error('Webhook returned ' + res.status);
+    return await res.json().catch(() => ({}));
+  }
+  function setAimSubmitting(submitting, label) {
+    const submit = document.querySelector('.aim-actions button.primary');
+    const cancel = document.querySelector('.aim-actions button.ghost');
+    if (!submit) return;
+    submit.disabled = submitting;
+    if (cancel) cancel.disabled = submitting;
+    submit.textContent = label || (submitting ? 'Deploying...' : 'Lock & Load →');
+  }
+  document.getElementById('aimForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     const cfg = {};
     AIM_FIELDS.forEach(k => {
@@ -3132,7 +3151,25 @@
     });
     saveAimConfig(cfg);
     refreshAimBanner();
-    closeAimModal();
+    setAimSubmitting(true);
+    try {
+      const result = await deployCampaignToDrive(cfg);
+      if (result && result.folderUrl) {
+        setAimSubmitting(false, 'Deployed ✓');
+        const banner = document.getElementById('aimCurrent');
+        if (banner) {
+          banner.innerHTML = '[ TARGET LOCKED <span class="target">' + (cfg.name || cfg.project) + '</span> . <a href="' + result.folderUrl + '" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:underline;">OPEN DRIVE FOLDER</a> ]';
+        }
+        setTimeout(() => { closeAimModal(); setAimSubmitting(false); }, 900);
+      } else {
+        setAimSubmitting(false);
+        closeAimModal();
+      }
+    } catch (err) {
+      console.error('Deploy failed', err);
+      setAimSubmitting(false, 'Deploy failed - saved locally');
+      setTimeout(() => setAimSubmitting(false), 2500);
+    }
   });
 
   // Init
