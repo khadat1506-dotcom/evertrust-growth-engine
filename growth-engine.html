@@ -2489,11 +2489,14 @@
 
 <div class="wf-wheel" id="wfWheel" data-reveal>
   <svg class="wf-wheel-svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
-    <g class="wedges"></g>
-    <g class="wedge-outlines"></g>
+    <!-- Order matters: rings/dividers first so wedges naturally render on top.
+         Avoids re-parenting the active wedge (which kills the click event
+         between mousedown and mouseup). -->
     <circle class="ring" cx="300" cy="300" r="290"/>
     <g class="inner-arcs"></g>
     <g class="dividers"></g>
+    <g class="wedges"></g>
+    <g class="wedge-outlines"></g>
   </svg>
   <div class="wf-wheel-items"></div>
   <div class="wf-wheel-center">
@@ -3296,15 +3299,9 @@
       a.classList.toggle('active', parseInt(a.dataset.index) === wheelIndex);
     });
 
-    // Promote active wedge wrapper + outline to top of SVG so the rings/dividers
-    // behind are occluded by the lifted shape. Move the <a> wrapper rather than
-    // just the path so the native link stays intact and clicks still navigate.
-    const svgEl = container.querySelector('.wf-wheel-svg');
-    const activeWedge = container.querySelector(`.wedge.active`);
-    const activeWrap = activeWedge && activeWedge.parentElement && activeWedge.parentElement.tagName.toLowerCase() === 'a' ? activeWedge.parentElement : activeWedge;
-    const activeOutline = container.querySelector(`.wedge-outline.active`);
-    if (svgEl && activeWrap) svgEl.appendChild(activeWrap);
-    if (svgEl && activeOutline) svgEl.appendChild(activeOutline);
+    // No DOM re-parenting needed: SVG order now puts wedges above rings/dividers
+    // by default, so the active wedge's opaque fill occludes geometry behind it.
+    // Re-parenting was breaking the click event flow on real mouse clicks.
     container.querySelectorAll('.wf-wheel-item').forEach(el => {
       el.classList.toggle('active', parseInt(el.dataset.index) === wheelIndex);
     });
