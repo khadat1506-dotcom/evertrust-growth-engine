@@ -3318,7 +3318,15 @@
     const idx = ((i % N) + N) % N;
     const wf = WORKFLOWS[idx];
     const url = wf.n8nId ? `${N8N_BASE}/workflow/${wf.n8nId}` : N8N_BASE + '/home/workflows';
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Synthetic anchor click - bypasses popup blockers that eat window.open
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   // ============ AIM (target config) ============
