@@ -44,6 +44,49 @@
 
   * { box-sizing: border-box; }
 
+  /* Kairos-style animated DOM cursor (recoloured white) ============ */
+  *, *::before, *::after { cursor: none !important; }
+  .kc {
+    position: fixed; top: 0; left: 0;
+    width: 32px; height: 32px;
+    pointer-events: none; z-index: 999999;
+    transform: translate(-50%, -50%) rotate(0deg);
+    will-change: left, top, transform;
+  }
+  .kc.hidden { opacity: 0; }
+  .kc > span {
+    position: absolute;
+    background: #ffffff;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.55);
+    transition: all 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .kc-top { top: 2px;    left: 50%; margin-left: -0.75px; width: 1.5px; height: 10px; }
+  .kc-bot { bottom: 2px; left: 50%; margin-left: -0.75px; width: 1.5px; height: 10px; }
+  .kc-lef { left: 2px;   top: 50%;  margin-top: -0.75px;  width: 10px;  height: 1.5px; }
+  .kc-rig { right: 2px;  top: 50%;  margin-top: -0.75px;  width: 10px;  height: 1.5px; }
+  .kc-dot {
+    top: 50%; left: 50%;
+    margin: -1.5px 0 0 -1.5px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+    transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .kc.locked { transform: translate(-50%, -50%) rotate(45deg) scale(0.62); animation: kcLock 0.35s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .kc.locked .kc-dot { opacity: 0; transform: scale(0.2); }
+  @keyframes kcLock {
+    0%   { transform: translate(-50%, -50%) rotate(0deg)  scale(1); }
+    55%  { transform: translate(-50%, -50%) rotate(55deg) scale(0.7); }
+    100% { transform: translate(-50%, -50%) rotate(45deg) scale(0.62); }
+  }
+  /* White I-beam for text inputs and editable cells */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='24' viewBox='0 0 16 24'><line x1='8' y1='3' x2='8' y2='21' stroke='%23ffffff' stroke-width='1.5'/><line x1='5' y1='3' x2='11' y2='3' stroke='%23ffffff' stroke-width='1.5'/><line x1='5' y1='21' x2='11' y2='21' stroke='%23ffffff' stroke-width='1.5'/></svg>") 8 12, text !important;
+  }
+
   html {
     background: var(--bg);
     scroll-behavior: smooth;
@@ -1212,22 +1255,34 @@
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
   }
+  .wf-wheel-svg .inner-arc {
+    fill: none;
+    stroke: var(--line-bright);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 0.25s ease;
+  }
+  .wf-wheel-svg .inner-arc.active { opacity: 0; }
   .wf-wheel-svg .wedge {
     fill: rgba(234, 234, 234, 0);
     stroke: none;
     cursor: pointer;
-    transition: fill 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: 300px 300px;
+    transform-box: view-box;
+    transition: fill 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .wf-wheel-svg .wedge:hover { fill: rgba(234, 234, 234, 0.03); }
-  .wf-wheel-svg .wedge.active { fill: rgba(234, 234, 234, 0.1); }
+  .wf-wheel-svg .wedge:hover { fill: #1a1a1a; transform: scale(1.08); }
+  .wf-wheel-svg .wedge.active { fill: #1a1a1a; transform: scale(1.08); }
   .wf-wheel-svg .wedge-outline {
     fill: none;
     stroke: var(--ink);
     stroke-width: 0;
     pointer-events: none;
-    transition: stroke-width 0.35s ease;
+    transform-origin: 300px 300px;
+    transform-box: view-box;
+    transition: stroke-width 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .wf-wheel-svg .wedge-outline.active { stroke-width: 1.5; }
+  .wf-wheel-svg .wedge-outline.active { stroke-width: 1.5; transform: scale(1.08); }
 
   .wf-wheel-items {
     position: absolute;
@@ -1840,6 +1895,13 @@
 </style>
 </head>
 <body>
+<div class="kc" id="kc" aria-hidden="true">
+  <span class="kc-top"></span>
+  <span class="kc-bot"></span>
+  <span class="kc-lef"></span>
+  <span class="kc-rig"></span>
+  <span class="kc-dot"></span>
+</div>
 
 <!-- Fixed HUD chrome -->
 <div class="corner-bracket tl"></div>
@@ -2420,7 +2482,7 @@
 
 <div class="arsenal-intro">
   <h1 class="arsenal-title">Arsenal</h1>
-  <p class="arsenal-lead">Thirteen weapons - twelve in build, one already mounted. REACH BAZOOKA is the live artillery; the rest are loaded around it.</p>
+  <p class="arsenal-lead">Evertrust Internal Arsenal . Classified . Operational command: Trung Cang Huynh . Authorised personnel only.</p>
 </div>
 <hr class="arsenal-rule">
 
@@ -2429,7 +2491,7 @@
     <g class="wedges"></g>
     <g class="wedge-outlines"></g>
     <circle class="ring" cx="300" cy="300" r="290"/>
-    <circle class="ring" cx="300" cy="300" r="130"/>
+    <g class="inner-arcs"></g>
     <g class="dividers"></g>
   </svg>
   <div class="wf-wheel-items"></div>
@@ -2444,7 +2506,6 @@
   <button class="wf-wheel-nav prev" type="button" title="Previous">&lt;</button>
   <button class="wf-wheel-nav next" type="button" title="Next">&gt;</button>
 </div>
-<div class="aim-current" id="aimCurrent">[ NO TARGET LOCKED ]</div>
 <div class="wf-wheel-footer">[ hover to preview . click weapon to open in n8n . [AIM] in topbar to set target ]</div>
 
 </div>
@@ -2947,6 +3008,148 @@
   ];
 
   let wheelIndex = 0;
+  let wheelAudioCtx = null;
+  function getAudioCtx() {
+    if (!wheelAudioCtx) wheelAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (wheelAudioCtx.state === 'suspended') wheelAudioCtx.resume();
+    return wheelAudioCtx;
+  }
+
+  // Hover: sharp transient but muffled (fast attack, heavy lowpass, very subtle)
+  function clickTick() {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      // Very brief noise burst through aggressive lowpass = sharp but dull tick
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.018), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const noise = ctx.createBufferSource();
+      const noiseGain = ctx.createGain();
+      const nlp = ctx.createBiquadFilter();
+      nlp.type = 'lowpass';
+      nlp.frequency.value = 700;
+      nlp.Q.value = 0.4;
+      noise.buffer = buf;
+      noiseGain.gain.setValueAtTime(0.035, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+      noise.connect(nlp).connect(noiseGain).connect(ctx.destination);
+      noise.start(now);
+
+      // Tiny triangle blip lowpassed for tonal warmth - very quiet, very brief
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      const lp = ctx.createBiquadFilter();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.02);
+      lp.type = 'lowpass';
+      lp.frequency.value = 600;
+      oscGain.gain.setValueAtTime(0.0001, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.03, now + 0.001);
+      oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+      osc.connect(lp).connect(oscGain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.03);
+    } catch (e) { /* silent */ }
+  }
+
+  // Click: deep muffled clunk, kept very subtle
+  function clickThunk() {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      // Sub thump
+      const sub = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(140, now);
+      sub.frequency.exponentialRampToValueAtTime(55, now + 0.07);
+      subGain.gain.setValueAtTime(0.0001, now);
+      subGain.gain.exponentialRampToValueAtTime(0.09, now + 0.005);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      sub.connect(subGain).connect(ctx.destination);
+      sub.start(now);
+      sub.stop(now + 0.13);
+
+      // Mid body through heavy lowpass
+      const body = ctx.createOscillator();
+      const bodyGain = ctx.createGain();
+      const lp = ctx.createBiquadFilter();
+      body.type = 'triangle';
+      body.frequency.setValueAtTime(280, now);
+      body.frequency.exponentialRampToValueAtTime(130, now + 0.05);
+      lp.type = 'lowpass';
+      lp.frequency.value = 550;
+      lp.Q.value = 0.6;
+      bodyGain.gain.setValueAtTime(0.0001, now);
+      bodyGain.gain.exponentialRampToValueAtTime(0.045, now + 0.005);
+      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+      body.connect(lp).connect(bodyGain).connect(ctx.destination);
+      body.start(now);
+      body.stop(now + 0.11);
+
+      // Muffled noise dust
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.04), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const noise = ctx.createBufferSource();
+      const noiseGain = ctx.createGain();
+      const nlp = ctx.createBiquadFilter();
+      nlp.type = 'lowpass';
+      nlp.frequency.value = 500;
+      noise.buffer = buf;
+      noiseGain.gain.setValueAtTime(0.03, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+      noise.connect(nlp).connect(noiseGain).connect(ctx.destination);
+      noise.start(now);
+    } catch (e) { /* silent */ }
+  }
+
+  // Global click sound - any click anywhere on the page plays the thunk.
+  // Capture phase so it fires even on stopPropagation handlers.
+  document.addEventListener('click', () => { clickThunk(); }, true);
+
+  // Custom animated cursor (Kairos-port, white). Follows the mouse; on
+  // clickable elements it morphs into a "locked" reticle.
+  (function(){
+    const c = document.getElementById('kc');
+    if (!c) return;
+    let mx = 0, my = 0, raf = false;
+    function move(e) { mx = e.clientX; my = e.clientY; if (!raf) { raf = true; requestAnimationFrame(apply); } }
+    function apply() { raf = false; c.style.left = mx + 'px'; c.style.top = my + 'px'; }
+    document.addEventListener('mousemove', move, { passive: true });
+    document.addEventListener('mouseleave', () => c.classList.add('hidden'));
+    document.addEventListener('mouseenter', () => c.classList.remove('hidden'));
+    let lastClickable = null;
+    const CLICKABLE_SEL = 'button, a, select, [onclick], .tab, .wedge, .wf-wheel-nav, .topbar-aim, .hero-cta-btn, .check, .task-delete, .wf-wheel-item, label';
+    const TEXT_SEL = 'input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]), textarea, [contenteditable="true"]';
+    document.addEventListener('mouseover', function(e) {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      const inText = t.closest(TEXT_SEL);
+      const clickable = inText ? null : t.closest(CLICKABLE_SEL);
+      if (inText) {
+        c.classList.add('hidden');
+        c.classList.remove('locked');
+        lastClickable = null;
+      } else if (clickable) {
+        c.classList.remove('hidden');
+        // Only trigger the lock animation when transitioning from non-clickable
+        // to clickable. Moving between clickables keeps the X static.
+        if (!c.classList.contains('locked')) {
+          c.classList.add('locked');
+        }
+        lastClickable = clickable;
+      } else {
+        c.classList.remove('hidden');
+        c.classList.remove('locked');
+        lastClickable = null;
+      }
+    });
+  })();
   function initWheel() {
     const container = document.getElementById('wfWheel');
     if (!container) return;
@@ -2954,6 +3157,7 @@
     const wedgesGroup = svg.querySelector('.wedges');
     const outlinesGroup = svg.querySelector('.wedge-outlines');
     const dividersGroup = svg.querySelector('.dividers');
+    const innerArcsGroup = svg.querySelector('.inner-arcs');
     const itemsLayer = container.querySelector('.wf-wheel-items');
 
     const N = WORKFLOWS.length;
@@ -2983,7 +3187,7 @@
       fill.setAttribute('d', d);
       fill.setAttribute('class', 'wedge');
       fill.dataset.index = i;
-      fill.addEventListener('mouseenter', () => selectWheel(i));
+      fill.addEventListener('mouseenter', () => { if (i !== wheelIndex) clickTick(); selectWheel(i); });
       fill.addEventListener('click', () => openWheelN8n(i));
       wedgesGroup.appendChild(fill);
 
@@ -3003,6 +3207,20 @@
       line.setAttribute('x2', x2); line.setAttribute('y2', y2);
       line.setAttribute('class', 'divider');
       dividersGroup.appendChild(line);
+
+      // Inner arc segment for this wedge - hidden when wedge is active so it
+      // doesn't show under the lifted shape.
+      const aa1 = (i * SEG - 90 - SEG/2) * Math.PI / 180;
+      const aa2 = (i * SEG - 90 + SEG/2) * Math.PI / 180;
+      const ax1 = CX + R_INNER * Math.cos(aa1);
+      const ay1 = CY + R_INNER * Math.sin(aa1);
+      const ax2 = CX + R_INNER * Math.cos(aa2);
+      const ay2 = CY + R_INNER * Math.sin(aa2);
+      const arc = document.createElementNS(SVG_NS, 'path');
+      arc.setAttribute('d', `M ${ax1} ${ay1} A ${R_INNER} ${R_INNER} 0 0 1 ${ax2} ${ay2}`);
+      arc.setAttribute('class', 'inner-arc');
+      arc.dataset.index = i;
+      innerArcsGroup.appendChild(arc);
     }
 
     const R_ITEM_PCT = 35;
@@ -3025,6 +3243,14 @@
     if (prevBtn) prevBtn.addEventListener('click', () => selectWheel(wheelIndex - 1));
     if (nextBtn) nextBtn.addEventListener('click', () => selectWheel(wheelIndex + 1));
 
+    // When the mouse leaves the wheel entirely, drop the lifted shape back
+    // to its resting size. Center panel stays populated with the last weapon.
+    container.addEventListener('mouseleave', () => {
+      container.querySelectorAll('.wedge.active').forEach(w => w.classList.remove('active'));
+      container.querySelectorAll('.wedge-outline.active').forEach(w => w.classList.remove('active'));
+      container.querySelectorAll('.inner-arc.active').forEach(a => a.classList.remove('active'));
+    });
+
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
       const wfActive = document.querySelector('.tab-content[data-tab="workflows"].active');
@@ -3034,6 +3260,10 @@
     }, true);
 
     selectWheel(0);
+    // Drop the initial lift so the wheel rests until first hover.
+    container.querySelectorAll('.wedge.active').forEach(w => w.classList.remove('active'));
+    container.querySelectorAll('.wedge-outline.active').forEach(w => w.classList.remove('active'));
+    container.querySelectorAll('.inner-arc.active').forEach(a => a.classList.remove('active'));
   }
 
   function selectWheel(i) {
@@ -3049,6 +3279,17 @@
     container.querySelectorAll('.wedge-outline').forEach(w => {
       w.classList.toggle('active', parseInt(w.dataset.index) === wheelIndex);
     });
+    container.querySelectorAll('.inner-arc').forEach(a => {
+      a.classList.toggle('active', parseInt(a.dataset.index) === wheelIndex);
+    });
+
+    // Promote active wedge + outline to top of SVG so the rings/dividers behind
+    // are occluded by the lifted shape.
+    const svgEl = container.querySelector('.wf-wheel-svg');
+    const activeWedge = container.querySelector(`.wedge.active`);
+    const activeOutline = container.querySelector(`.wedge-outline.active`);
+    if (svgEl && activeWedge) svgEl.appendChild(activeWedge);
+    if (svgEl && activeOutline) svgEl.appendChild(activeOutline);
     container.querySelectorAll('.wf-wheel-item').forEach(el => {
       el.classList.toggle('active', parseInt(el.dataset.index) === wheelIndex);
     });
