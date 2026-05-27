@@ -3184,13 +3184,25 @@
     for (let i = 0; i < N; i++) {
       const d = wedgePath(i);
 
+      // Wrap each wedge in an SVG <a> so the browser handles n8n nav natively.
+      // Native anchors survive DOM reparenting between mousedown/mouseup that
+      // would otherwise cancel a synthetic click handler.
+      const wrapHref = WORKFLOWS[i].n8nId
+        ? `${N8N_BASE}/workflow/${WORKFLOWS[i].n8nId}`
+        : `${N8N_BASE}/home/workflows`;
+      const wrap = document.createElementNS(SVG_NS, 'a');
+      wrap.setAttributeNS(null, 'href', wrapHref);
+      wrap.setAttributeNS(null, 'target', '_blank');
+      wrap.setAttributeNS(null, 'rel', 'noopener noreferrer');
+      wrap.dataset.index = i;
+
       const fill = document.createElementNS(SVG_NS, 'path');
       fill.setAttribute('d', d);
       fill.setAttribute('class', 'wedge');
       fill.dataset.index = i;
       fill.addEventListener('mouseenter', () => { if (i !== wheelIndex) clickTick(); selectWheel(i); });
-      fill.addEventListener('click', () => openWheelN8n(i));
-      wedgesGroup.appendChild(fill);
+      wrap.appendChild(fill);
+      wedgesGroup.appendChild(wrap);
 
       const outline = document.createElementNS(SVG_NS, 'path');
       outline.setAttribute('d', d);
@@ -3284,12 +3296,14 @@
       a.classList.toggle('active', parseInt(a.dataset.index) === wheelIndex);
     });
 
-    // Promote active wedge + outline to top of SVG so the rings/dividers behind
-    // are occluded by the lifted shape.
+    // Promote active wedge wrapper + outline to top of SVG so the rings/dividers
+    // behind are occluded by the lifted shape. Move the <a> wrapper rather than
+    // just the path so the native link stays intact and clicks still navigate.
     const svgEl = container.querySelector('.wf-wheel-svg');
     const activeWedge = container.querySelector(`.wedge.active`);
+    const activeWrap = activeWedge && activeWedge.parentElement && activeWedge.parentElement.tagName.toLowerCase() === 'a' ? activeWedge.parentElement : activeWedge;
     const activeOutline = container.querySelector(`.wedge-outline.active`);
-    if (svgEl && activeWedge) svgEl.appendChild(activeWedge);
+    if (svgEl && activeWrap) svgEl.appendChild(activeWrap);
     if (svgEl && activeOutline) svgEl.appendChild(activeOutline);
     container.querySelectorAll('.wf-wheel-item').forEach(el => {
       el.classList.toggle('active', parseInt(el.dataset.index) === wheelIndex);
