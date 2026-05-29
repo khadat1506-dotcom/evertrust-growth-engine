@@ -1900,6 +1900,33 @@
     .component-progress { justify-content: flex-start; }
     .page-indicator, .build-tag, .corner-bracket { display: none; }
   }
+
+  /* ============ MOBILE / TOUCH ONLY - desktop (pointer:fine) is untouched ============ */
+  @media (hover: none) and (pointer: coarse) {
+    /* (1) ARSENAL heading was oversized on phones */
+    .arsenal-title { font-size: 1.5rem; }
+
+    /* (2) Top tab strip: natural-width tabs that scroll sideways only (Kairos pattern) */
+    .topbar-tabs {
+      justify-content: flex-start;
+      touch-action: pan-x;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab { flex: 0 0 auto; white-space: nowrap; padding: 0 16px; }
+
+    /* (3) Lock the page horizontally; allow vertical scroll only - kills the loose wobble */
+    html, body { overscroll-behavior: none; }
+    .tab-content { touch-action: pan-y; }
+    /* keep the wheel's prev/next arrows on-screen instead of off the viewport edge */
+    .wf-wheel { margin-top: 24px; }
+    .wf-wheel-nav.prev { left: 0; }
+    .wf-wheel-nav.next { right: 0; }
+
+    /* (4) Hide the desktop crosshair cursor; restore the native caret */
+    #kc { display: none !important; }
+    *, *::before, *::after { cursor: auto !important; }
+  }
 </style>
 </head>
 <body>
@@ -2625,6 +2652,33 @@
     if (e.key === 'ArrowLeft' && idx > 0) activateTab(tabs[idx - 1].dataset.tab);
   });
 
+  // ============ SWIPE TO SWITCH TABS (touch only) ============
+  if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+    const main = document.querySelector('main');
+    if (main) {
+      let sx = 0, sy = 0, st = 0, tracking = false;
+      main.addEventListener('touchstart', e => {
+        if (e.touches.length !== 1) { tracking = false; return; }
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true;
+      }, { passive: true });
+      main.addEventListener('touchend', e => {
+        if (!tracking) return;
+        tracking = false;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+        // Require a fast, far, horizontal-dominant swipe so vertical scrolls and taps don't trigger it.
+        if (Math.abs(dx) < 60 || Math.abs(dx) <= Math.abs(dy) * 1.6 || dt > 600) return;
+        const activeTab = document.querySelector('.tab.active');
+        const idx = Array.from(tabs).indexOf(activeTab);
+        if (dx < 0 && idx < tabs.length - 1) activateTab(tabs[idx + 1].dataset.tab); // swipe left -> next
+        else if (dx > 0 && idx > 0) activateTab(tabs[idx - 1].dataset.tab);          // swipe right -> prev
+        else return;
+        const nowActive = document.querySelector('.tab.active');
+        if (nowActive) nowActive.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      }, { passive: true });
+    }
+  }
+
   // ============ STATE ============
   const STORAGE_KEY = 'evertrust-progress-v3';
   let state = {};
@@ -3132,6 +3186,9 @@
   (function(){
     const c = document.getElementById('kc');
     if (!c) return;
+    // Touch devices have no mouse to track; skip the crosshair entirely so it
+    // can't appear under taps.
+    if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) return;
     let mx = 0, my = 0, raf = false;
     function move(e) { mx = e.clientX; my = e.clientY; if (!raf) { raf = true; requestAnimationFrame(apply); } }
     function apply() { raf = false; c.style.left = mx + 'px'; c.style.top = my + 'px'; }
