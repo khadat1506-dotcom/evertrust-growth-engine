@@ -1923,6 +1923,26 @@
     .wf-wheel-nav.prev { left: 0; }
     .wf-wheel-nav.next { right: 0; }
 
+    /* (2b) Tabs to their own full-width row - logo + AIM share row 1, tabs scroll on row 2.
+            On one row the logo + AIM + gaps crushed the strip to a ~43px sliver. */
+    .topbar { flex-wrap: wrap; height: auto; min-height: var(--topbar-h); align-items: center; column-gap: 12px; row-gap: 0; }
+    .brand-mark { order: 1; }
+    .topbar-aim { order: 2; margin-left: auto; }
+    .topbar-tabs { order: 3; flex-basis: 100%; width: 100%; height: 44px; border-top: 1px solid var(--line); }
+
+    /* (3b) Wheel hub: shrink + contain the centre text so it fits the disc, not the wedges */
+    .wf-wheel-center { width: 42%; height: 42%; padding: 8px; }
+    .wf-wheel-center > * { max-width: 100%; }
+    .wf-wheel-stage { font-size: 7.5px; margin-bottom: 2px; }
+    .wf-wheel-id-large { font-size: 8.5px; margin-bottom: 3px; }
+    .wf-wheel-name { font-size: 11px; line-height: 1.05; margin-bottom: 4px; }
+    .wf-wheel-desc { display: none; }
+    .wf-wheel-meta { gap: 4px; }
+    .wf-wheel-meta span { font-size: 7px; padding: 1px 4px; letter-spacing: 0.08em; }
+    .wf-wheel-action { font-size: 7px; margin-top: 5px; letter-spacing: 0.12em; }
+    /* neutralise the sticky :hover that left the nav arrow stuck solid-white after a tap */
+    .wf-wheel-nav:hover { background: var(--bg); color: var(--ink); border-color: var(--line-bright); }
+
     /* (4) Hide the desktop crosshair cursor; restore the native caret */
     #kc { display: none !important; }
     *, *::before, *::after { cursor: auto !important; }
