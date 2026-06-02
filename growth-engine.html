@@ -1557,10 +1557,30 @@
     outline: none;
     transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .aim-field input:focus {
+    .aim-field input:focus {
     border-color: var(--ink);
     background: var(--bg);
   }
+  .aim-field select {
+    background: var(--bg-elev);
+    border: 1px solid var(--line-bright);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 8px 28px 8px 10px;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238B8B8B' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .aim-field select:focus {
+    border-color: var(--ink);
+    background-color: var(--bg);
+  }
+  .aim-field select option { background: var(--bg-elev); color: var(--ink); }
   .aim-actions {
     display: flex;
     gap: 0;
@@ -2596,8 +2616,16 @@
         <input id="aim-country" name="country" type="text" placeholder="Germany" required>
       </div>
       <div class="aim-field">
-        <label for="aim-city">City</label>
-        <input id="aim-city" name="city" type="text" placeholder="Berlin" required>
+        <label for="aim-region">Region</label>
+        <select id="aim-region" name="region" required>
+          <option value="" disabled selected>Select a region</option>
+          <option value="Anywhere">Anywhere</option>
+          <option value="North">North</option>
+          <option value="South">South</option>
+          <option value="East">East</option>
+          <option value="West">West</option>
+          <option value="Near Border">Near Border</option>
+        </select>
       </div>
       <div class="aim-field">
         <label for="aim-project">Project</label>
@@ -3430,7 +3458,7 @@
 
   // ============ AIM (target config) ============
   const AIM_KEY = 'evertrust-target-config';
-  const AIM_FIELDS = ['name','niche','target','country','city','project','gmailLabel','salesCalendarId','whatsappNumber'];
+  const AIM_FIELDS = ['name','niche','target','country','region','project','gmailLabel','salesCalendarId','whatsappNumber'];
 
   function loadAimConfig() {
     try { return JSON.parse(localStorage.getItem(AIM_KEY) || 'null'); } catch (e) { return null; }
